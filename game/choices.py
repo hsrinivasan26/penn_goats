@@ -55,7 +55,7 @@ def pay_debt(state, amount: int, slot) -> bool:
 # MOVES WITH REAL IMPACT
 
 def take_loan(state, principal: int, apr: float, kind) -> bool:
-    """Borrow cash into one of the schema's debt slots (student/mortgage/credit_card)."""
+    # Borrow cash into one of the schema's debt slots (student/mortgage/credit_card/...)
     if kind not in state.liabilities or principal <= 0:
         return False
     state.cash += principal
@@ -68,12 +68,11 @@ def take_loan(state, principal: int, apr: float, kind) -> bool:
 
 # TODO: Why is this here?
 def go_to_school(state, cost: int) -> bool:
-    """Take a student loan. (Whether/when graduation raises gross is an open team decision.)"""
     return take_loan(state, cost, config.APR["student"], DebtKind.STUDENT)
 
 
 def buy_house(state, price: int, down: int) -> bool:
-    """Convert to owning: pay a down payment, take a mortgage, gain a home asset."""
+    # TODO: skip mortgage when the user has enough for a full down payment
     if down < 0 or down > state.cash or price < down:
         return False
     state.cash -= down
@@ -88,7 +87,6 @@ def buy_house(state, price: int, down: int) -> bool:
 
 
 def change_job(state, new_gross: int) -> bool:
-    """Switch to a new monthly gross (and become employed again if you weren't)."""
     if new_gross <= 0:
         return False
     state.gross_month = new_gross
@@ -97,7 +95,7 @@ def change_job(state, new_gross: int) -> bool:
 
 
 def buy_car(state, price: int) -> bool:
-    """MVP: cash purchase only. Loan-financed autos need an 'auto' debt slot (open item)."""
+    # WIP
     if not (0 < price <= state.cash):
         return False
     state.cash -= price

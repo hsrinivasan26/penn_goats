@@ -1,7 +1,6 @@
-"""Phase 5: the year-end tax bill (5a) and exactly one life event per turn (5b).
-
-Sizes/probabilities live in config.EVENTS; the wording lives in data/events.json.
-"""
+# PHASE 5: Annual tax bill
+# Specifications in data/events.json
+# Sizes/probabilities in config.EVENTS
 
 import json
 import os

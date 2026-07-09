@@ -17,8 +17,7 @@ def _zero_assets() -> dict:
 def _empty_debts() -> dict:
     return {s: None for s in DEBT_SLOTS}
 
-# A ton of tuning will be done to make both paths equally difficult. 
-# Don't touch these constants!
+# !!! Don't touch these constants !!!
 @dataclass(slots=True)
 class GameState:
     # meta

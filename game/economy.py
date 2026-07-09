@@ -1,4 +1,5 @@
-"""Phases 2 & 3: Markets (asset values drift) and Interest (debts grow). Neither touches cash."""
+# PHASE 2 and PHASE 3
+# Market drifting and interest stuff
 
 import config
 from .state import ASSET_CLASSES, DEBT_SLOTS

@@ -1,4 +1,4 @@
-"""Terminal game loop for Penn Goats -- play the engine before any UI exists.
+"""Terminal game loop for Penn Goats (playable w/o UI)
 
     python play.py                    # interactive, Path A, seed 0
     python play.py --path B --seed 7  # interactive, Path B
@@ -15,10 +15,10 @@ from game.enums import GameOver
 
 ASSET_CLASSES = ["riskfree", "index", "growth", "crypto"]
 GAME_OVER_BLURB = {
-    GameOver.WIN: "YOU WIN -- you reached a real safety buffer. That's the goal: not living paycheck to paycheck.",
-    GameOver.BANKRUPTCY: "BANKRUPT -- you couldn't cover essentials several months running. That shortfall spiral is exactly what this game is about avoiding.",
-    GameOver.BURNOUT: "BURNOUT -- happiness hit zero. Money isn't everything; you have to enjoy some of it.",
-    GameOver.TIMEOUT: "TIME'S UP -- you survived, but didn't reach the buffer target.",
+    GameOver.WIN: "YOU WIN -- you reached a real safety buffer. That's the goal, not living paycheck to paycheck.",
+    GameOver.BANKRUPTCY: "BANKRUPT -- you couldn't cover essentials several months running and fell into a shortfall spiral.",
+    GameOver.BURNOUT: "BURNOUT -- happiness hit zero. Money isn't everything! You have to enjoy some of life.",
+    GameOver.TIMEOUT: "TIME'S UP -- you survived, but didn't reach the buffer target.", # ...
 }
 
 
@@ -121,6 +121,7 @@ def interactive_actions(state):
             print("   (didn't recognize that)")
 
 
+# TODO: handle malformed input
 def _big_move_menu(state):
     print("   big moves: [a] buy house  [b] go to school  [c] change job  "
           "[d] buy car (cash)  [e] cancel")
