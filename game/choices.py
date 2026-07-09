@@ -1,14 +1,16 @@
-"""Phase 6: the player's optional moves with leftover cash. Invalid moves are no-ops (return False)."""
+# PHASE 6: What does the player do with leftover cash?
+# Invalid moves become no-ops (don't do anything and return False)
 
 import config
 from .enums import AssetClass, DebtKind, Housing
 from .formulas import capital_gain, cap_gains_tax, amortize
 
 
-# --- Core actions (the four the loop depends on) ---------------------------
+# THE BIG FOUR MOVES
 
 def invest(state, amount: int, cls) -> bool:
-    """Move cash into an asset class; cost_basis tracks what you paid (for capital gains)."""
+    # Cash -> investment
+    # cost_basis tracks what is paid (for capital gains)
     if cls not in state.investments or not (0 < amount <= state.cash):
         return False
     state.cash -= amount
@@ -18,7 +20,7 @@ def invest(state, amount: int, cls) -> bool:
 
 
 def sell(state, amount: int, cls) -> bool:
-    """Sell part of an asset, realize the gain, and accrue capital-gains tax on any profit."""
+    # Sell assets / (Investment - tax) -> cash
     balance = state.investments.get(cls, 0)
     if not (0 < amount <= balance):
         return False
@@ -31,7 +33,6 @@ def sell(state, amount: int, cls) -> bool:
 
 
 def leisure(state, amount: int) -> bool:
-    """Spend cash on fun; Phase 7 converts it to happiness (with diminishing returns)."""
     if not (0 < amount <= state.cash):
         return False
     state.cash -= amount
@@ -40,7 +41,6 @@ def leisure(state, amount: int) -> bool:
 
 
 def pay_debt(state, amount: int, slot) -> bool:
-    """Pay a debt beyond its minimum. Capped at both your cash and the remaining balance."""
     liab = state.liabilities.get(slot)
     if liab is None:
         return False
@@ -52,7 +52,7 @@ def pay_debt(state, amount: int, slot) -> bool:
     return True
 
 
-# --- Big moves -------------------------------------------------------------
+# MOVES WITH REAL IMPACT
 
 def take_loan(state, principal: int, apr: float, kind) -> bool:
     """Borrow cash into one of the schema's debt slots (student/mortgage/credit_card)."""
@@ -66,7 +66,7 @@ def take_loan(state, principal: int, apr: float, kind) -> bool:
         existing["principal"] += principal
     return True
 
-
+# TODO: Why is this here?
 def go_to_school(state, cost: int) -> bool:
     """Take a student loan. (Whether/when graduation raises gross is an open team decision.)"""
     return take_loan(state, cost, config.APR["student"], DebtKind.STUDENT)

@@ -6,7 +6,6 @@ from .formulas import apply_return, accrue_interest
 
 
 def phase_markets(state, rng) -> dict:
-    # Apply return, which is unknown until the player sells
     applied = {}
     for cls in ASSET_CLASSES:
         balance = state.investments[cls]
