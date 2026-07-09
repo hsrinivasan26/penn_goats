@@ -1,0 +1,6 @@
+[
+  {"id": "first_1k",  "label": "First $1,000 saved",          "bonus": 3, "when": {"cash_at_least": 1000}},
+  {"id": "halfway",   "label": "Halfway to your buffer",      "bonus": 4, "when": {"net_worth_at_least": 12500}},
+  {"id": "own_home",  "label": "Bought your first home",      "bonus": 5, "when": {"owns_home": true}},
+  {"id": "buffer",    "label": "Reached your safety buffer",  "bonus": 6, "when": {"net_worth_at_least": 25000}}
+]

@@ -1,6 +1,8 @@
-# Penn Goats — Game Loop Specification (v1.0)
+# Penn Goats — Game Loop Specification (v1.1)
 
 *Authoritative spec for the turn engine. The code must match this document. Every calculation here is defined precisely enough to verify by hand; §7 gives worked examples that should become unit tests. This supersedes the informal logic tree — corrections applied during review are listed in §9.*
+
+> **v1.1 — implementation update (reflects the built engine).** The engine is implemented, terminal-playable, and covered by 18 passing tests. A few things changed during the build and are folded into this spec below: **bankruptcy** is now a recurring-shortfall rule (not `net_worth <= 0`); **`TARGET` is per-path** (Path A $23k, Path B $68k) for equal difficulty; the **event table and essentials were rebalanced** because the original numbers were ~90% bankruptcy; and the **state is a slotted class**, not a bare dict. See `docs/implementation-status.md` for the full changelog, the real file tree, and what's not built yet (UI, AI coach).
 
 ---
 
@@ -25,17 +27,30 @@ These must always hold. Encode them as assertions in a `validate(state)` functio
 5. `shortfall_flag` is a boolean that was set exactly once this turn (in Phase 4).
 6. Game ends (and no further phases run) the instant a lose/win condition is met.
 
-**Terminal conditions:**
-- **Lose — bankruptcy:** `net_worth <= 0`
+**Terminal conditions:** *(v1.1 — bankruptcy reworked; see §9)*
+- **Lose — bankruptcy:** `consecutive_shortfalls >= BANKRUPTCY_SHORTFALL_STREAK` (default 3). Failing to cover essentials three months in a row — a cash-flow failure. **Negative net worth is NOT a loss** (starting adulthood with student debt is normal); net worth is the *win* metric only.
 - **Lose — burnout:** `happiness <= 0`
-- **Lose — timeout:** `turn == TURN_LIMIT` and `net_worth < TARGET`
+- **Lose — timeout:** `turn == TURN_LIMIT` and `net_worth < TARGET` *(TARGET is per-path — see §4)*
 - **Win:** `turn == TURN_LIMIT` and `net_worth >= TARGET`
+
+Add an invariant: `consecutive_shortfalls` increments each turn `shortfall_flag` is true and resets to 0 on any covered month.
 
 ---
 
 ## 3. State schema
 
 The entire game is this one object. Types shown; initial values set in Phase 0.
+
+> **v1.1 — state is now a class, not a bare dict.** It's a `@dataclass(slots=True)`
+> `GameState` (in `game/state.py`), so the set of fields is fixed and a misspelled
+> attribute (`state.cahs = 100`) raises `AttributeError` instead of silently creating
+> junk — important with a beginner team. Access is `state.cash`, not `state["cash"]`.
+> `investments`/`cost_basis`/`liabilities` keys and `housing`/`game_over` values use
+> the `(str, Enum)` types in `game/enums.py` (`AssetClass`, `DebtKind`, `Housing`,
+> `GameOver`). **Fields added since v1.0:** `target` (per-path win goal),
+> `consecutive_shortfalls` (bankruptcy counter), `milestones_fired` (list), and the
+> presentation-only `_event` / `_milestone` / `_paystub` / `_tax`. The dict below is
+> still an accurate field-by-field map.
 
 ```python
 state = {
@@ -102,8 +117,9 @@ Every "magic number" lives in this table. The code reads from a `PARAMS` dict; h
 **Game length & goal**
 | Name | Value | Note |
 |---|---|---|
-| `TURN_LIMIT` | 60 | months (5 years). Scope knob — see §9 note. |
-| `TARGET` | 25000 | net-worth goal to win (early-career: a real buffer, not FIRE) |
+| `TURN_LIMIT` | 60 | months (5 years). |
+| `TARGET` (per-path, v1.1) | A: 23000 · B: 68000 | net-worth goal to win — calibrated so both paths win ~50% under skilled play. Stored per path (`PATHS[..]["target"]`); `config.TARGET` (25000) is only a fallback default. |
+| `BANKRUPTCY_SHORTFALL_STREAK` (v1.1) | 3 | consecutive shortfall months that trigger bankruptcy. |
 
 **Taxes / withholding (applied to gross)**
 | Name | Value |
@@ -131,6 +147,7 @@ Withholding per paycheck = `FEDERAL_RATE + STATE_RATE + FICA_RATE = 0.2265`. Net
 | `student` | 0.06 | 0.005 |
 | `mortgage` | 0.065 | 0.0054167 |
 | `credit_card` | 0.24 | 0.02 |
+| `auto` (v1.1) | 0.09 | 0.0075 |  *(defined for BuyCar-on-loan, which is not built yet)*
 
 **Debt minimum payments (per month, while principal > 0)**
 | Debt | Minimum |
@@ -139,13 +156,13 @@ Withholding per paycheck = `FEDERAL_RATE + STATE_RATE + FICA_RATE = 0.2265`. Net
 | `credit_card` | `max(35, round(0.03 × principal))` |
 | `mortgage` | its `mortgage_payment` (counted in essentials, not here) |
 
-**Essentials defaults (monthly)**
-| Item | Value |
-|---|---|
-| `rent` (if renting) | 1200 |
-| `food` | 400 |
-| `transport` | 250 |
-| `utilities` | 150 |
+**Essentials defaults (monthly)** *(v1.1 — trimmed from a $2000 baseline so Path A can survive)*
+| Item | Value (v1.1) | was |
+|---|---|---|
+| `rent` (if renting) | 1100 | 1200 |
+| `food` | 380 | 400 |
+| `transport` | 230 | 250 |
+| `utilities` | 140 | 150 |
 
 **Happiness**
 | Name | Value |
@@ -157,24 +174,28 @@ Withholding per paycheck = `FEDERAL_RATE + STATE_RATE + FICA_RATE = 0.2265`. Net
 | `SHORTFALL_PENALTY` | 15 |
 | `happiness_start` | 60 |
 
-**Event table** (exactly one bucket fires per turn; probabilities sum to 100%)
-| Bucket | Prob | Magnitude | Effect |
-|---|---|---|---|
-| Small negative (car repair, dentist) | 35% | Small $ | Cash − |
-| Moderate negative (medical bill, hours cut) | 20% | Medium $ | Cash − , Gross − (durable) |
-| Large negative (layoff) | 5% | Large $ | Cash −− , sets `employed = False` |
-| Small positive (bonus, refund) | 22% | Small $ | Cash + |
-| Large positive (windfall, raise) | 3% | Large $ | Cash ++ (raise → Gross +) |
-| Mood-only | 15% | N/A | Happiness ± |
+**Event table** (exactly one bucket fires per turn; probabilities sum to 100%) *(v1.1 — rebalanced; original was ~90% bankruptcy)*
+| Bucket | Prob (v1.1) | was | Magnitude | Effect |
+|---|---|---|---|---|
+| **Quiet month (nothing happens)** | 30% | — | — | none |
+| Small negative (car repair, dentist) | 22% | 35% | Small $ | Cash − |
+| Moderate negative (medical bill, hours cut) | 8% | 20% | Medium $ | Cash − , Gross − (durable) |
+| Large negative (**layoff — now rare**) | 1% | 5% | Large $ | Cash −− , sets `employed = False` |
+| Small positive (bonus, refund) | 22% | 22% | Small $ | Cash + |
+| Large positive (windfall, raise) | 3% | 3% | Large $ | Cash ++ (raise → Gross +) |
+| Mood-only | 14% | 15% | N/A | Happiness ± |
 
-Magnitudes (uniform int in range): `Small` = [50, 300], `Medium` = [300, 800], `Large` = [800, 3000]. Mood-only happiness delta = uniform int [−10, +10]. `Gross −` durable = reduce `gross_month` by 10%.
+Magnitudes (uniform int in range): `Small` = [50, 300], `Medium` = [300, 700] *(was 800)*, `Large` = [800, 2000] *(was 3000)*. Mood-only happiness delta = uniform int [−10, +10]. `Gross −` durable = reduce `gross_month` by 10%.
 
-**Path A / B setup**
+**Layoff recovery (v1.1):** a layoff still sets `employed = False` with no automatic recovery — the player gets back on their feet by taking a new job via the `ChangeJob` action (Phase 6). Layoffs were made rare (1%) precisely because recovery is manual; a UI/coach should prompt "find a new job" after one, or a beginner who doesn't will spiral.
+
+**Path A / B setup** *(v1.1: Path A gross bumped; per-path targets added)*
 | Field | Path A (low pay, no debt) | Path B (high pay, debt) |
 |---|---|---|
-| `gross_month` | 3000 (36k/yr) | 5000 (60k/yr) |
+| `gross_month` | 3300 (~40k/yr) *(was 3000)* | 5000 (60k/yr) |
 | `student` loan | none | `{principal:30000, apr:0.06}` |
 | `cash` start | 500 | 500 |
+| `target` (win goal, v1.1) | 23000 | 68000 |
 | everything else | defaults above | defaults above |
 
 ---
@@ -184,7 +205,7 @@ Magnitudes (uniform int in range): `Small` = [50, 300], `Medium` = [300, 800], `
 Each turn runs Phases 1–8 in order. Phase 0 runs once at game start. At the **start of every turn**, reset scratch: `shortfall_flag=False; leisure_spend=0; event_happiness_delta=0; milestone_bonus=0`.
 
 ### Phase 0 — Setup (once)
-Choose path → apply the Path A/B row from §4. Set `happiness = happiness_start`, `turn = 1`, seed RNG. Housing starts as `"rent"` with `rent = 1200`.
+Choose path → apply the Path A/B row from §4 (including its per-path `target`, v1.1). Set `happiness = happiness_start`, `turn = 1`, `consecutive_shortfalls = 0`, seed RNG. Housing starts as `"rent"` with `rent = 1100` (v1.1).
 
 ### Phase 1 — Income
 ```
@@ -237,6 +258,8 @@ else:
     # (create credit_card liability if none exists)
 ```
 *Note: essentials always get "covered"; when short, the coverage is forced borrowing at credit-card APR — that is the consequence the game teaches. The two review-flagged bullets ("add rest to liabilities" / "charge gap to credit card") are the same single operation above.*
+
+*(v1.1) Immediately after this phase, update the bankruptcy counter: `consecutive_shortfalls = consecutive_shortfalls + 1 if shortfall_flag else 0`. When owning, the `mortgage_payment` (inside essentials) also pays down the mortgage principal — the spec was silent on this, and without it the loan would grow forever. Debt minimums are capped at the remaining principal so a tiny balance can't be overpaid negative.*
 
 ### Phase 5 — Events
 **5a. Annual tax (only if `turn % 12 == 0`):**
@@ -307,14 +330,15 @@ happiness = clamp(round(h), 0, 100)
 if happiness <= 0:  game_over = "burnout"; STOP
 ```
 
-### Phase 8 — Checks
+### Phase 8 — Checks  *(v1.1 — bankruptcy rule replaced)*
 ```
-if net_worth <= 0:                              game_over = "bankruptcy"; STOP   # CORRECTED (was = 0)
-if turn == TURN_LIMIT:
-    game_over = "win" if net_worth >= TARGET else "timeout"; STOP
+if consecutive_shortfalls >= BANKRUPTCY_SHORTFALL_STREAK:   game_over = "bankruptcy"; STOP
+elif turn == TURN_LIMIT:
+    game_over = "win" if net_worth >= target else "timeout"; STOP   # target is per-path
 append snapshot to history
 turn += 1
 ```
+*Was `if net_worth <= 0: bankruptcy`. That made Path B (which starts ~−$29.5k from student debt) lose on turn 1, so bankruptcy is now a cash-flow failure (recurring shortfalls) and net worth is only the **win** metric. `target` comes from the chosen path.*
 
 ---
 
@@ -392,17 +416,18 @@ capital_gains_owed += round(50 · 0.15) = 8
 ## 9. Corrections applied (vs. the settled logic tree) & open items
 
 **Corrections baked into this spec:**
-1. **Bankruptcy** is `net_worth <= 0` (tree said `= 0`).
+1. ~~**Bankruptcy** is `net_worth <= 0`~~ → **superseded in v1.1**: bankruptcy is now a recurring-shortfall rule (see §2/§8). The `net_worth <= 0` version made Path B lose on turn 1.
 2. **Shortfall gap** is `REQUIRED_OUTFLOW − cash` (tree had the sign reversed).
 3. **Shortfall handling deduplicated** to one operation (unpaid remainder → credit card).
 4. **Rent-hike event** raises essentials via a durable rent increase, *not* `Gross −`; `Gross −` is reserved for job events (hours cut, demotion).
 5. **Housing fork resolved:** own → `mortgage_payment` in essentials + `home` as an appreciating asset; rent → flat `rent` in essentials, no asset.
 
-**Open items to settle (parameters, not structure):**
-- **Difficulty / event balance.** As specified, an event fires every turn and ~60% are negative cash hits — combined with essentials + decay this may be punishing early. *Recommendation:* add a `Quiet (nothing happens)` bucket (~20%) and rescale, or make turns 1–3 event-free. This is a `PARAMS` change; the engine doesn't move.
-- **Scope (`TURN_LIMIT` / `TARGET`).** Set to 60 months / $25k here, i.e., early-career. A lifetime arc means raising both — but that pushes the game toward the *Escape the Grind* shape (see differentiation guide). Decide deliberately; it's two numbers.
-- **Graduation effect** of `GoToSchool` (does finishing school raise gross, and after how many turns?) — currently unspecified; define before implementing big moves.
+**Open items — status (v1.1):**
+- **Difficulty / event balance — RESOLVED.** 800-game simulations showed the original table was ~90% bankruptcy even under skilled play (the dominant cause was permanent layoffs). Fixed via a 30% "quiet month" bucket, rare (1%) layoffs, gentler negatives, and Path A relief. Both paths now win ~50% under skilled play. See `docs/implementation-status.md` → Balance.
+- **Scope (`TURN_LIMIT` / `TARGET`) — RESOLVED.** Early-career confirmed (60 months). `TARGET` is now **per-path** ($23k A / $68k B) to make the two equally difficult.
+- **Graduation effect of `GoToSchool` — still open.** `GoToSchool` currently just takes a student loan; whether/when finishing school raises gross is undecided.
+- **New open items from the build:** home asset = financed amount (down payment is a straight net-worth hit); "moderate negative" always also cuts gross and "large positive" always raises it (could split); `BuyCar`-on-loan needs an `auto` liability slot (MVP is cash-only). All listed in `README.md` and `docs/implementation-status.md`.
 
 ---
 
-*Once §4 numbers and the three open items are ratified, this spec is complete enough to implement Phases 0–8 directly, with §7 as the first unit tests.*
+*Implemented per this spec (v1.1). Phases 0–8 are live in `game/`, with §7's worked examples as passing tests. See `docs/implementation-status.md` for the current build state.*
