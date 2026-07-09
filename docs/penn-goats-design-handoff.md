@@ -174,18 +174,30 @@ state = {
 ```
 Each of the 8 phases is one `phase(state) -> state` function; `run_turn()` chains them in order. A slider is just a field; an "interaction" is which phase touches which field. **Adding a mechanic later = inserting a function at the right phase** — nothing else moves.
 
-**Suggested module layout (Python-only teammates live entirely in `/game` + `events.json`):**
+> **v1.1 — the state is now a class, not a dict.** The sketch above captured the idea; the built version is a `@dataclass(slots=True) GameState` (`game/state.py`) so a misspelled field raises immediately instead of silently creating junk — worth it with a team still learning Python. Access is `state.cash`, not `state["cash"]`. See the game-loop spec §3 for the full field list.
+
+**Module layout — AS BUILT (v1.1).** The engine is implemented, terminal-playable, and covered by 18 passing tests. `app.py` (Streamlit) is **not built yet** — the engine comes first, exactly as planned. Content teammates live in `data/` + `config.py`.
 ```
-/game
-  state.py         # state object + new_game()
-  paystub.py       # gross -> net  (education core)
-  economy.py       # prices, tiers, allocate()
-  events.py        # scenarios + resolve_event()
-  progression.py   # streak / level / coins
-  engine.py        # runs one full turn
-app.py             # Streamlit UI only
-events.json        # scenario data (edit without touching code)
+config.py            # every tunable number (the single source of truth)
+play.py              # terminal game loop (play before any UI exists)
+game/                # the ENGINE (pure Python, no UI)
+  formulas.py        # pure spec math (paystub, interest, gains, amortize, rounding)
+  enums.py           # typo-safe GameOver / AssetClass / DebtKind / Housing
+  state.py           # the GameState class + new_game()
+  rng.py             # seeded randomness
+  paystub.py         # Phase 1  income (gross -> net)
+  economy.py         # Phases 2+3  markets + interest
+  outflows.py        # Phase 4  forced bill + shortfall
+  events.py          # Phase 5  year-end tax + life event
+  choices.py         # Phase 6  player moves
+  happiness.py       # Phase 7  the anti-hoarding meter
+  engine.py          # Phase 8 checks + run_turn() (chains all 8) + milestones
+data/
+  events.json        # life-event wording (content, no code)
+  milestones.json    # milestone bonuses (content, no code)
+tests/               # worked examples, invariants, events, enums
 ```
+*(`progression.py` from the original sketch was deferred — streak/level/coins are a retention layer for later; the engine ships the financial core only. `events.json` moved under `data/`.)*
 
 **Deployment:** push to GitHub → Streamlit Community Cloud (free) → public URL, zero DevOps.
 **Streamlit limits (all fine for a turn-based game):** awkward at shared cross-user state → **fake the leaderboard with static peer scores for the MVP**; no real-time animation (irrelevant here); limited visual polish → the "ugly is fine" tradeoff working *for* you.
@@ -266,10 +278,16 @@ In Streamlit: `st.write(coach(s, event))` (or `st.chat_message` for the chat loo
 
 ## 12. Open decisions (resolve as a team)
 
-1. **Timeline scope — early-career vs full lifetime.** *Recommendation: early-career* (same four sliders and systems, first-paycheck spine, investing as a late unlock). Keeps every idea, halves the balancing burden, stays on-need. If you keep the full lifetime game, **update the need statement to match** — don't let need and build silently disagree.
-2. **Tax timing.** *Recommendation: show withholding on the paystub* so *net* lands in cash (preserves the gross→net teaching moment), with year-end tax as a small reconciliation + capital-gains on sales. Alternative (gross into cash, big annual tax bill) throws away the paystub lesson.
-3. **Leaderboard for MVP.** Fake with static peer scores (Streamlit is weak at shared state); build real only if a coder has spare Week-3 time.
-4. **AI scope.** Build deterministic teaching first (fully reliable); add the AI coach (slots 1–2) as the differentiator if time allows; bounded Q&A tutor is a stretch.
+*Status as of v1.1 (engine built). See `docs/implementation-status.md` for details.*
+
+1. **Timeline scope — early-career vs full lifetime.** ✅ **DECIDED: early-career.** 60 in-game months; investing kept small. Matches the need statement and the differentiation guide.
+2. **Tax timing.** ✅ **DECIDED & BUILT: withholding on the paystub.** Net lands in cash; a small year-end reconciliation + capital-gains on sales. The gross→net moment is preserved.
+3. **Leaderboard for MVP.** ⏳ **Unbuilt (plan stands):** fake with static peer scores; build real only if a coder has spare time. No leaderboard code yet.
+4. **AI scope.** ⏳ **Unbuilt (plan stands):** deterministic teaching is done and fully reliable; the AI coach is the next differentiator to add.
+5. **(New, v1.1) Bankruptcy rule.** ✅ **DECIDED & BUILT:** you lose by failing to cover essentials 3 months running (a cash-flow failure), not by negative net worth. Net worth is the *win* metric.
+6. **(New, v1.1) Difficulty & equal paths.** ✅ **DECIDED & BUILT:** rebalanced from ~90% bankruptcy to ~50% win under skilled play; the two paths are equalised via per-path win targets ($23k A / $68k B).
+7. **(New, v1.1) Layoffs.** ✅ **DECIDED:** rare, and you recover by taking a new job (manual). A UI/coach must prompt this.
+8. **(New, v1.1) Graduation effect of GoToSchool.** ⏳ **Still open** — finishing school doesn't yet raise gross.
 
 ---
 
@@ -295,4 +313,4 @@ In Streamlit: `st.write(coach(s, event))` (or `st.chat_message` for the chat loo
 
 ---
 
-*End of handoff. The fastest next step from here is to scaffold the `/game` engine (the 8 phase functions + state object, terminal-playable) so the team can feel whether the loop is fun before the Streamlit layer exists — then wire the `coach()` AI layer and lock the starting numbers.*
+*End of handoff. **v1.1 update:** the `/game` engine is built and terminal-playable (`python play.py`), covered by 18 passing tests, with the starting numbers locked and balanced. The next steps are now the **Streamlit UI** over the engine and the **`coach()` AI layer** — see `docs/implementation-status.md` for the current state and what's next.*
