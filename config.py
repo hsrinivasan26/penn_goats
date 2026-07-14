@@ -49,14 +49,22 @@ HAPPINESS_START = 60
 # magnitude = inclusive [low, high] dollar range; sign = +/- direction.
 # "quiet" = a calm month (nothing happens); "large_neg" = a rare layoff you must
 # recover from by finding a new job (the change_job action).
+# "match"  = employer 401(k) match ("free money" -- a small positive cash bump).
+# "raise"  = a durable cost-of-living raise (gross_mult), the lifestyle-inflation
+#            teaching moment (separate from the one-off windfall in large_pos).
+# NOTE: match/raise were added AFTER the original 50/50 tuning. They pull 2% from
+# small_pos and 2% from mood; a durable raise makes the game a touch easier, so
+# RE-RUN the balance sim (python play.py --auto) and check with the team before shipping.
 EVENTS = [
     {"key": "quiet",     "prob": 30, "magnitude": [0, 0],      "sign": +1},
     {"key": "small_neg", "prob": 22, "magnitude": [50, 300],   "sign": -1},
     {"key": "mod_neg",   "prob": 8,  "magnitude": [300, 700],  "sign": -1, "gross_mult": 0.90},
     {"key": "large_neg", "prob": 1,  "magnitude": [800, 2000], "sign": -1, "set_unemployed": True},
-    {"key": "small_pos", "prob": 22, "magnitude": [50, 300],   "sign": +1},
+    {"key": "small_pos", "prob": 20, "magnitude": [50, 300],   "sign": +1},
+    {"key": "match",     "prob": 2,  "magnitude": [50, 250],   "sign": +1},
     {"key": "large_pos", "prob": 3,  "magnitude": [800, 3000], "sign": +1, "gross_mult": 1.10},
-    {"key": "mood",      "prob": 14, "happiness_range": [-10, 10]},
+    {"key": "raise",     "prob": 2,  "magnitude": [50, 200],   "sign": +1, "gross_mult": 1.10},
+    {"key": "mood",      "prob": 12, "happiness_range": [-10, 10]},
 ]
 
 # Starting scenarios (both early-career). Not the differentiation-guide's Path A/B.
