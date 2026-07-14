@@ -1,4 +1,4 @@
-"""Phase 7: Happiness -- the anti-hoarding pressure that forces you to spend a little."""
+# PHASE 7: Happiness
 
 import config
 from .enums import GameOver
@@ -6,7 +6,7 @@ from .formulas import round_half_up, leisure_happiness
 
 
 def phase_happiness(state) -> None:
-    """Decay, then stress/shortfall penalties, then leisure + event/milestone gains, then clamp 0-100."""
+    # Apply natural decay
     h = state.happiness - config.DECAY
 
     debt_ratio = state.weighted_debt() / max(1, state.gross_month * 12)

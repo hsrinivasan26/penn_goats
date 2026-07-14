@@ -1,5 +1,9 @@
 """Every tunable constant, in one place. Change difficulty here, nowhere else. (Spec parameters table.)"""
 
+# !!! IMPORTANT !!!
+# I spent 4 hours hand tuning so that paths A/B are roughly equal in difficulty (50/50)
+# If you have any issues with these, please consult the whole team as a whole!
+
 # Game length & goal
 TURN_LIMIT = 60            # months (5 years)
 TARGET = 25_000           # net worth needed to win

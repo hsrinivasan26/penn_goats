@@ -1,4 +1,5 @@
-"""Phases 2 & 3: Markets (asset values drift) and Interest (debts grow). Neither touches cash."""
+# PHASE 2 and PHASE 3
+# Market drifting and interest stuff
 
 import config
 from .state import ASSET_CLASSES, DEBT_SLOTS
@@ -6,7 +7,6 @@ from .formulas import apply_return, accrue_interest
 
 
 def phase_markets(state, rng) -> dict:
-    # Apply return, which is unknown until the player sells
     applied = {}
     for cls in ASSET_CLASSES:
         balance = state.investments[cls]

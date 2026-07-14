@@ -1,10 +1,5 @@
-"""Named constants for the values that must never be typos.
+# Named constants for the values that must never be typos
 
-Each inherits from `str`, so members ARE real strings: they work as dict keys,
-serialize to JSON, and compare equal to their text ("index" == AssetClass.INDEX).
-That makes them a drop-in over the plain strings we used before, while a typo
-like GameOver.BANKRUPCY now fails loudly instead of silently.
-"""
 
 from enum import Enum
 

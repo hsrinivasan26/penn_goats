@@ -1,9 +1,6 @@
-"""The GameState class -- one object that holds the whole game.
+# @dataclass(slots=True), which means the set of attributes is fixed.
+# Prevents fatal type-safety bugs
 
-It uses @dataclass(slots=True), which means the set of attributes is FIXED. A
-misspelling like `state.cahs = 100` raises AttributeError immediately instead of
-silently creating a junk field -- the safety property we want for a team.
-"""
 
 from dataclasses import dataclass, field
 import config
@@ -20,7 +17,7 @@ def _zero_assets() -> dict:
 def _empty_debts() -> dict:
     return {s: None for s in DEBT_SLOTS}
 
-
+# !!! Don't touch these constants !!!
 @dataclass(slots=True)
 class GameState:
     # meta

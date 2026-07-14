@@ -1,4 +1,5 @@
-"""Phase 8 checks + run_turn(), which chains all 8 phases. Also fires milestones from data/milestones.json."""
+# PHASE 8 and the actual system
+# Checks milestones too!
 
 import json
 import os
