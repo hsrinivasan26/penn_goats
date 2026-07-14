@@ -9,7 +9,7 @@ def phase_happiness(state) -> None:
     """Decay, then stress/shortfall penalties, then leisure + event/milestone gains, then clamp 0-100."""
     h = state.happiness - config.DECAY
 
-    debt_ratio = state.liabilities_total() / max(1, state.gross_month * 12)
+    debt_ratio = state.weighted_debt() / max(1, state.gross_month * 12)
     if debt_ratio > config.STRESS_LIMIT:
         h -= config.STRESS_PENALTY
     if state.shortfall_flag:

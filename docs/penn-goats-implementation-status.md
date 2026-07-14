@@ -76,6 +76,7 @@ income → markets → interest → forced outflows → events (tax + life) → 
 | **Constants** | `PARAMS` dict | flat `config.py` constants + a `formulas.py` module | Cleaner for a non-coder to edit; formulas isolated and testable. |
 | **Milestones** | inline (`+5` on BuyHouse) | data-driven `data/milestones.json` | Content-editable without touching code. |
 | **Module `progression.py`** | in the sketch | deferred | Streak/level/coins is a retention layer for later; the engine ships the financial core. |
+| **Debt stress weight** *(v1.1.1)* | all debt equal | per-kind `STRESS_WEIGHT` (credit_card 1.5 … student 0.15) | Teaches good-debt vs bad-debt: student/mortgage barely stress you, credit cards weigh heavy. Feeds stress→burnout only, never a direct loss. `STRESS_LIMIT` lowered 1.0→0.35 to match. Skilled win rate unchanged. |
 
 Smaller build-time decisions where the spec was silent: the **mortgage principal now amortizes** (paying it down each month; otherwise it grew forever); **minimum debt payments are capped at the balance** (so a tiny balance can't be overpaid negative); the **home asset is booked at the financed amount** (`price − down`, per the spec's formula — a consequence is that the down payment is a straight net-worth hit).
 

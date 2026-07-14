@@ -30,13 +30,25 @@ MIN_PAYMENT = {
     "credit_card": {"floor": 35, "fraction": 0.03},
 }
 
+# How heavily each debt kind bears on STRESS/happiness (Phase 7) -- separate from its
+# interest rate (which is the cash-flow weight). "Good debt" (student, mortgage) is light;
+# credit cards are the trap and weigh most. This NEVER directly loses you the game -- it
+# only feeds the stress -> burnout channel. "tax" applies to unpaid tax_owed.
+STRESS_WEIGHT = {
+    "credit_card": 1.5,   # heaviest: 24% APR + the minimum-payment spiral
+    "tax":         1.2,   # owing the IRS is urgent
+    "auto":        0.8,   # secured but depreciating; repossession risk
+    "mortgage":    0.10,  # "good debt" -- builds equity
+    "student":     0.15,  # light, but still a real (small) drag
+}
+
 # Essentials (monthly). Trimmed from a $2000 baseline to give Path A room to survive.
 ESSENTIALS = {"rent": 1100, "food": 380, "transport": 230, "utilities": 140}
 
 # Happiness
 DECAY = 4
 GAIN_SCALE = 1.5          # leisure_happiness = round(1.5 * sqrt(spend))
-STRESS_LIMIT = 1.0        # debt / annual-gross ratio above which stress applies
+STRESS_LIMIT = 0.35       # weighted-debt / annual-gross ratio above which stress applies
 STRESS_PENALTY = 5
 SHORTFALL_PENALTY = 15
 HAPPINESS_START = 60
