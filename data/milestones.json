@@ -1,6 +1,11 @@
 [
-  {"id": "first_1k",  "label": "First $1,000 saved",          "bonus": 3, "when": {"cash_at_least": 1000}},
-  {"id": "halfway",   "label": "Halfway to your buffer",      "bonus": 4, "when": {"net_worth_at_least": 12500}},
-  {"id": "own_home",  "label": "Bought your first home",      "bonus": 5, "when": {"owns_home": true}},
-  {"id": "buffer",    "label": "Reached your safety buffer",  "bonus": 6, "when": {"net_worth_at_least": 25000}}
+  {"id": "first_500",    "label": "First $500 in the bank",         "bonus": 2, "when": {"cash_at_least": 500}},
+  {"id": "first_1k",     "label": "First $1,000 saved",             "bonus": 3, "when": {"cash_at_least": 1000}},
+  {"id": "one_month",    "label": "One month of expenses saved",    "bonus": 2, "when": {"cash_at_least": 1850}},
+  {"id": "nw_5k",        "label": "First $5,000 net worth",         "bonus": 2, "when": {"net_worth_at_least": 5000}},
+  {"id": "three_month",  "label": "Three months of expenses saved", "bonus": 3, "when": {"cash_at_least": 5500}},
+  {"id": "halfway",      "label": "Halfway to your buffer",         "bonus": 4, "when": {"net_worth_at_least": 12500}},
+  {"id": "buffer",       "label": "Reached your safety buffer",     "bonus": 6, "when": {"net_worth_at_least": 25000}},
+  {"id": "own_home",     "label": "Bought your first home",         "bonus": 5, "when": {"owns_home": true}},
+  {"id": "double_buffer","label": "Double your safety buffer",      "bonus": 3, "when": {"net_worth_at_least": 50000}}
 ]
