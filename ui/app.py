@@ -20,11 +20,14 @@ from game.state import new_game
 from game.rng import SeededRNG
 from game.formulas import leisure_happiness
 from game import choices
+from game import mcq
 
 import style
 import render
 import turn
 import titles
+import coach
+import quiz
 
 st.set_page_config(page_title="Penn Goats", page_icon="🐐", layout="wide")
 style.inject_css()
@@ -72,6 +75,8 @@ def screen_title():
             go("choose"); st.rerun()
         if st.button("How to play", use_container_width=True):
             go("howto"); st.rerun()
+        if st.button("Money quiz", use_container_width=True):
+            go("quiz"); st.rerun()
         if st.button("Titles", use_container_width=True):
             go("titles"); st.rerun()
 
@@ -249,20 +254,6 @@ def screen_play():
             st.rerun()
 
 
-def _coach_line(s, outcome):
-    if outcome == "win":
-        return ("You reached a real buffer — that's the whole game. From here, you're not living "
-                "paycheck to paycheck.")
-    if outcome == "bankruptcy":
-        return ("The essentials caught up with you. Next run, keep a bigger cushion before investing so "
-                "one bad month doesn't spiral.")
-    if outcome == "burnout":
-        return ("You ran yourself into the ground. A little fun each month keeps happiness up — it's part "
-                "of the budget too.")
-    return ("You survived the five years, but didn't reach the buffer. Steady saving and clearing "
-            "high-interest debt gets you there.")
-
-
 def screen_howto():
     st.markdown("<h2 style='margin-bottom:2px'>How it works</h2>", unsafe_allow_html=True)
     st.markdown("<p style='color:#9aa0ac;font-size:13.5px;margin:2px 0 14px'>"
@@ -350,8 +341,14 @@ def screen_results():
         f"<div class='rv' style='color:#38bdf8'>{s.happiness}</div></div>"
         "</div>", unsafe_allow_html=True)
 
-    st.markdown(f"<div class='coach'><div class='face'>🐐</div><div><div class='ct'>Your coach</div>"
-                f"<p>{_coach_line(s, outcome)}</p></div></div>", unsafe_allow_html=True)
+    # AI coach: generated once per finished game (cached so reruns don't re-hit the model)
+    if ss.get("coach_for") != id(s):
+        with st.spinner("Your coach is reviewing your run…"):
+            ss.coach_text, ss.coach_is_ai = coach.overview(s, outcome)
+        ss.coach_for = id(s)
+    ct = "Your coach · AI" if ss.coach_is_ai else "Your coach"
+    st.markdown(f"<div class='coach'><div class='face'>🐐</div><div><div class='ct'>{ct}</div>"
+                f"<p>{ss.coach_text}</p></div></div>", unsafe_allow_html=True)
 
     if earned_now:
         chips = "".join(f"<span class='tchip'>{t['icon']} {t['name']}</span>"
@@ -368,9 +365,94 @@ def screen_results():
         go("title"); st.rerun()
 
 
+def _start_quiz():
+    day = ss.get("quiz_day", 0)
+    with st.spinner("Putting together today's questions…"):
+        topic, bank, used_ai = quiz.build_daily_quiz(day, n=5, seed=random.randint(0, 10**6))
+    ss.quiz = mcq.Quiz(bank)
+    ss.quiz_topic, ss.quiz_ai = topic, used_ai
+    ss.quiz_phase, ss.quiz_feedback = "answer", None
+
+
+def screen_quiz():
+    q = ss.get("quiz")
+
+    # start view
+    if q is None:
+        topic = mcq.topic_for_day(ss.get("quiz_day", 0))
+        st.markdown("<h2 style='margin-bottom:2px'>Money quiz</h2>"
+                    f"<p style='color:#9aa0ac;font-size:13.5px'>Today's topic: "
+                    f"<b style='color:#e8e8ea'>{topic.title()}</b> — 5 questions, easy to hard. "
+                    "Pass mark is 65%.</p>", unsafe_allow_html=True)
+        c = st.columns([1, 1, 3])
+        if c[0].button("Start quiz", type="primary"):
+            _start_quiz(); st.rerun()
+        if c[1].button("← Menu"):
+            go("title"); st.rerun()
+        return
+
+    # results view
+    if q.finished and ss.get("quiz_phase") != "review":
+        res = q.results()
+        passed = res["passed_gate"]
+        col = "#34d399" if passed else "#ef4444"
+        st.markdown(
+            f"<div class='rbanner'><span class='rbadge' style='color:{col};background:{col}1a;"
+            f"border:1px solid {col}55'>{'PASSED' if passed else 'NOT YET'}</span>"
+            f"<h2>{res['score']} / {res['total']} · {res['percent']}%</h2>"
+            f"<div class='rs'>{mcq.verdict_message(res['percent'])}</div></div>", unsafe_allow_html=True)
+        c = st.columns([1, 1, 3])
+        if c[0].button("New quiz", type="primary"):
+            ss.quiz_day = ss.get("quiz_day", 0) + 1
+            ss.quiz = None; st.rerun()
+        if c[1].button("← Menu"):
+            ss.quiz = None; go("title"); st.rerun()
+        return
+
+    # review view (feedback for the question just answered)
+    if ss.get("quiz_phase") == "review":
+        fb = ss.quiz_feedback
+        p = fb["prompt"]
+        st.markdown(f"<div class='amsg'>Question {p['number']} of {p['total']}</div>", unsafe_allow_html=True)
+        st.markdown(f"**{p['stem']}**")
+        for opt in p["options"]:
+            oid = opt["id"]
+            if oid == fb["correct_option_id"]:
+                st.markdown(f"<div class='qopt qgood'>✓ {oid}. {opt['text']}</div>", unsafe_allow_html=True)
+            elif oid == fb["chosen"] and not fb["correct"]:
+                st.markdown(f"<div class='qopt qbad'>✗ {oid}. {opt['text']}</div>", unsafe_allow_html=True)
+            else:
+                st.markdown(f"<div class='qopt'>{oid}. {opt['text']}</div>", unsafe_allow_html=True)
+        verdict = "Correct!" if fb["correct"] else f"Not quite — the answer was {fb['correct_option_id']}."
+        st.markdown(f"<div class='qexpl'><b>{verdict}</b> {fb['explanation']}</div>", unsafe_allow_html=True)
+        if st.button("See results" if q.finished else "Next question ▶", type="primary"):
+            ss.quiz_phase, ss.quiz_feedback = "answer", None
+            st.rerun()
+        return
+
+    # answer view
+    p = q.current_prompt()
+    item = q.current()
+    diff = mcq.DIFFICULTY_LABELS.get(item.difficulty.lower(), item.difficulty.title())
+    src = "AI" if ss.get("quiz_ai") else "practice set"
+    st.markdown(f"<div class='amsg'>Question {p['number']} of {p['total']} · "
+                f"{ss.quiz_topic.title()} · {diff} · {src}</div>", unsafe_allow_html=True)
+    st.markdown(f"**{p['stem']}**")
+    labels = {opt["id"]: f"{opt['id']}.  {opt['text']}" for opt in p["options"]}
+    choice = st.radio("Choose one:", [opt["id"] for opt in p["options"]],
+                      format_func=lambda x: labels[x], key=f"quiz_{p['id']}", index=None)
+    if st.button("Submit answer", type="primary", disabled=choice is None):
+        fb = q.submit_answer(choice)
+        ss.quiz_feedback = {"prompt": p, "chosen": choice, "correct": fb["correct"],
+                            "correct_option_id": fb["correct_option_id"],
+                            "explanation": fb["explanation"]}
+        ss.quiz_phase = "review"
+        st.rerun()
+
+
 # --------------------------------------------------------------------------
 # Router
 # --------------------------------------------------------------------------
 
 {"title": screen_title, "choose": screen_choose, "play": screen_play, "results": screen_results,
- "titles": screen_titles, "howto": screen_howto}.get(ss.screen, screen_title)()
+ "titles": screen_titles, "howto": screen_howto, "quiz": screen_quiz}.get(ss.screen, screen_title)()

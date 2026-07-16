@@ -91,6 +91,13 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:-.02em}
 .pstat .sl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .pstat .sv{font-family:var(--disp);font-weight:600;font-size:15px;margin-top:2px;font-variant-numeric:tabular-nums}
 
+/* money quiz */
+.qopt{border:1px solid var(--border);border-radius:10px;padding:9px 12px;margin:5px 0;font-size:13.5px}
+.qopt.qgood{border-color:#2f6f4f;background:#0f1f19;color:#34d399;font-weight:600}
+.qopt.qbad{border-color:#5a2b2b;background:#241416;color:#fb7185;font-weight:600}
+.qexpl{margin-top:12px;font-size:13px;color:var(--muted);background:var(--inset);
+  border:1px solid var(--border);border-radius:10px;padding:11px 13px;line-height:1.5}
+
 /* how to play */
 .steps{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:6px}
 @media(max-width:640px){.steps{grid-template-columns:1fr}}
