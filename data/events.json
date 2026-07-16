@@ -1,10 +1,12 @@
 {
   "_comment": "Flavor text for life events. CONTENT TEAMMATES: edit these freely -- add, remove, or reword scenarios. The dollar sizes, probabilities and mechanical effects live in config.py (the EVENTS table); this file only controls the wording the player sees. Keys must match the bucket keys in config.py.",
-  "quiet": ["A calm month -- nothing unusual", "Quiet month, no surprises", "An uneventful few weeks"],
-  "small_neg": ["Car repair", "Dentist visit", "Phone screen cracked", "Vet bill", "Parking ticket"],
-  "mod_neg": ["Hours cut at work", "Medical bill", "Emergency flight home", "Laptop died"],
-  "large_neg": ["Laid off", "Major car accident (not insured enough)"],
-  "small_pos": ["Small bonus", "Tax refund", "Sold some old stuff", "Birthday cash"],
-  "large_pos": ["Promotion and raise!", "Unexpected windfall"],
-  "mood": ["A great weekend with friends", "A rough, lonely week", "Got sick", "Weekend trip lifted your spirits"]
+  "quiet": ["A calm month -- nothing unusual", "Quiet month, no surprises", "An uneventful few weeks", "A steady, ordinary month", "Nothing much happened -- nice for once"],
+  "small_neg": ["Car repair", "Dentist visit", "Phone screen cracked", "Vet bill", "Parking ticket", "Forgot to cancel a free trial", "Overdraft fee (didn't check your balance)", "Buy-now-pay-later bill came due", "Festival resale tickets (FOMO)", "Car got towed", "Impulse buy from a TikTok ad", "Late fee on a bill you forgot", "Out-of-network ATM fee", "Ordered takeout way too often", "Ride-share surge pricing home", "Gym membership you never use auto-renewed"],
+  "mod_neg": ["Hours cut at work", "Medical bill", "Emergency flight home", "Laptop died", "Wisdom teeth out (high-deductible plan)", "Friend's destination wedding", "Slow month for gig work", "Fender bender (underinsured)", "Moving: deposit + first & last month", "Pet emergency at the vet", "Bridesmaid dress + travel", "New apartment security deposit", "Root canal", "Bike stolen, no coverage"],
+  "large_neg": ["Laid off", "Major car accident (not insured enough)", "The startup you joined ran out of runway", "Whole team cut in a restructuring", "Sick for weeks, couldn't work"],
+  "small_pos": ["Small bonus", "Tax refund", "Sold some old stuff", "Birthday cash", "Sold clothes on Depop", "Referral bonus at work", "Cash-back rewards hit", "Freelance gig paid out", "Roommate paid you back", "Won a gift card", "Overtime pay this month", "Found $40 in an old jacket"],
+  "match": ["401(k) match kicked in -- free money from your employer", "Employer matched your retirement contribution", "Got your full 401(k) match this month", "Payroll started your 401(k) match", "Employer bumped the match to 5%"],
+  "large_pos": ["Promotion and raise!", "Unexpected windfall", "Signing bonus at a new job", "Year-end bonus landed", "Won a hackathon prize"],
+  "raise": ["Cost-of-living raise -- try not to spend it all", "Small raise (watch the lifestyle creep)", "Pay bump -- bank it before you get used to it", "Annual review raise -- resist upgrading everything", "Moved up a pay band"],
+  "mood": ["A great weekend with friends", "A rough, lonely week", "Got sick", "Weekend trip lifted your spirits", "Aced a side project, feeling great", "Missing home a bit", "Joined a fun hobby group", "Burned out from overtime"]
 }
