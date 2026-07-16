@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Penn Goats — Titles · How to play · Leaderboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0e1117;--surface:#191c24;--surface2:#20242e;--inset:#12151c;--border:#2a2f3a;
+    --text:#e8e8ea;--muted:#9aa0ac;--faint:#6b7280;--purple:#8b6dff;
+    --cash:#34d399;--invest:#f5b642;--debt:#ef4444;--happy:#3aa0e6;
+    --disp:"Inter",system-ui,sans-serif;--body:"Inter",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#07090d;color:var(--text);font-family:var(--body);line-height:1.5;
+    -webkit-font-smoothing:antialiased;padding:34px 20px 70px}
+  .page{max-width:1000px;margin:0 auto}
+  h1,h2,h3,h4{font-family:var(--disp);letter-spacing:-.02em;margin:0}
+  .num{font-variant-numeric:tabular-nums}
+  .pagehead{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+  .pagehead .logo{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:20px;
+    background:linear-gradient(150deg,#2a2350,#1a1d24);border:1px solid #3a3170}
+  .pagehead h1{font-size:20px}
+  .pagesub{color:var(--muted);font-size:13.5px;margin:0 0 8px;max-width:680px}
+  .eyebrow{font-family:var(--disp);font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--purple);margin:38px 0 14px;display:flex;align-items:center;gap:10px}
+  .eyebrow::after{content:"";height:1px;flex:1;background:linear-gradient(90deg,var(--border),transparent)}
+
+  .frame{border:1px solid #262b34;border-radius:16px;overflow:hidden;background:var(--bg);
+    box-shadow:0 40px 90px -40px rgba(0,0,0,.9)}
+  .tbar{display:flex;align-items:center;gap:8px;padding:10px 13px;background:#14171e;border-bottom:1px solid #23272f}
+  .tbar .dot{width:10px;height:10px;border-radius:50%}
+  .tbar .u{margin-left:10px;color:var(--faint);font-size:11.5px;font-family:var(--disp)}
+  .btn{border-radius:12px;padding:11px 18px;font-family:var(--disp);font-weight:600;font-size:13.5px;
+    border:1px solid var(--border);background:var(--surface2);color:var(--text);display:inline-block;text-align:center}
+  .btn.primary{background:linear-gradient(180deg,#9b7dff,#7c5cff);border:none;color:#fff}
+
+  /* ---------- TITLES ---------- */
+  .body{padding:26px 28px}
+  .th{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+  .th h2{font-size:22px}
+  .th .prog{font-family:var(--disp);font-size:13px;color:var(--muted)}
+  .pbar{height:7px;border-radius:999px;background:var(--inset);overflow:hidden;margin:10px 0 22px}
+  .pbar > i{display:block;height:100%;width:44%;border-radius:999px;background:linear-gradient(90deg,#8b6dff,#34d399)}
+  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  @media(max-width:760px){.tiles{grid-template-columns:1fr 1fr}}
+  .tile{border:1px solid var(--border);border-radius:14px;padding:14px;background:var(--surface)}
+  .tile .ic{font-size:22px}
+  .tile .tn{font-family:var(--disp);font-weight:600;font-size:14px;margin-top:8px}
+  .tile .tc{font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.4}
+  .tile.earned{border-color:#3a3170;background:linear-gradient(180deg,#1d1a2e,#161420)}
+  .tile.earned .tn{color:#fff}
+  .tile.locked{opacity:.55}
+  .tile.locked .ic{filter:grayscale(1)}
+  .tile.win{border-color:#205040;background:linear-gradient(180deg,#0f1f19,#141a18)}
+  .tile.win .tn{color:var(--cash)}
+  .tile .badge{float:right;font-size:10px;font-family:var(--disp);color:var(--faint)}
+
+  /* ---------- HOW TO PLAY ---------- */
+  .steps{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:6px}
+  @media(max-width:640px){.steps{grid-template-columns:1fr}}
+  .step{display:flex;gap:13px;border:1px solid var(--border);border-radius:14px;padding:15px;background:var(--surface)}
+  .step .no{width:30px;height:30px;flex:none;border-radius:9px;display:grid;place-items:center;font-family:var(--disp);
+    font-weight:700;background:#241f45;border:1px solid #4a3f8a;color:#c7b8ff;font-size:14px}
+  .step .st{font-family:var(--disp);font-weight:600;font-size:14px}
+  .step .sd{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid var(--border);
+    font-size:12.5px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .legend i{width:10px;height:10px;border-radius:50%}
+
+  /* ---------- LEADERBOARD ---------- */
+  .lbnote{color:var(--muted);font-size:13px;margin:4px 0 18px}
+  .lrow{display:flex;align-items:center;gap:12px;padding:11px 14px;border:1px solid var(--border);border-radius:12px;
+    margin-bottom:8px;background:var(--surface)}
+  .lrow.you{border-color:var(--purple);background:linear-gradient(180deg,#1d1a2e,#15141c)}
+  .lrow .rk{font-family:var(--disp);font-weight:700;color:var(--faint);width:22px}
+  .lrow .av{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:18px;
+    background:radial-gradient(circle at 40% 30%,#3a3170,#241f45);border:1px solid #4a3f8a}
+  .lrow .nm{font-family:var(--disp);font-weight:600;font-size:14px}
+  .lrow .tt{font-size:11.5px;color:var(--muted)}
+  .lrow .nw{margin-left:auto;font-family:var(--disp);font-weight:600;color:var(--cash)}
+  .lrow.you .nm{color:#fff}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="pagehead"><div class="logo">🐐</div><h1>Penn Goats — the retention screens</h1></div>
+  <p class="pagesub">Completion <b>titles</b> (your idea), <b>How to play</b>, and a <b>leaderboard</b> kept deliberately social — not the point of the game. (Customization/coins wait on the mascot art + the engine's progression layer.)</p>
+
+  <!-- TITLES -->
+  <p class="eyebrow">Titles — earn them by how you play</p>
+  <div class="frame">
+    <div class="tbar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span><span class="u">penn-goats · titles</span></div>
+    <div class="body">
+      <div class="th"><h2>Your titles</h2><span class="prog num">7 / 16 earned</span></div>
+      <div class="pbar"><i></i></div>
+      <div class="tiles">
+        <div class="tile win"><span class="badge">WIN</span><div class="ic">🐐</div><div class="tn">Budget GOAT</div><div class="tc">Reached your net-worth goal.</div></div>
+        <div class="tile earned"><div class="ic">⛏️</div><div class="tn">Dug Out</div><div class="tc">Won the graduate path — cleared the $30k loan.</div></div>
+        <div class="tile earned"><div class="ic">🎯</div><div class="tn">Airtight</div><div class="tc">A whole game with zero shortfall months.</div></div>
+        <div class="tile earned"><div class="ic">🗡️</div><div class="tn">Loan Slayer</div><div class="tc">Paid off your student loan in full.</div></div>
+        <div class="tile earned"><div class="ic">🏠</div><div class="tn">Homeowner</div><div class="tc">Bought your first house.</div></div>
+        <div class="tile earned"><div class="ic">☀️</div><div class="tn">Living the Dream</div><div class="tc">Ended with happiness 90+.</div></div>
+        <div class="tile earned"><div class="ic">💼</div><div class="tn">Bounced Back</div><div class="tc">Survived a layoff and still hit the goal.</div></div>
+        <div class="tile locked"><div class="ic">💎</div><div class="tn">Diamond Hooves</div><div class="tc">Reach the goal with crypto in the mix.</div></div>
+        <div class="tile locked"><div class="ic">😤</div><div class="tn">All Grind, No Joy</div><div class="tc">Finish with happiness under 25 the whole way.</div></div>
+        <div class="tile locked"><div class="ic">💸</div><div class="tn">Miserably Rich</div><div class="tc">Hit the goal but end below 20 happiness.</div></div>
+        <div class="tile locked"><div class="ic">🛏️</div><div class="tn">Mattress Stuffer</div><div class="tc">Win without ever investing a dollar.</div></div>
+        <div class="tile locked"><span class="badge">LOSS</span><div class="ic">🃏</div><div class="tn">Rug-Pulled</div><div class="tc">Go bust after going heavy on crypto.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW TO PLAY -->
+  <p class="eyebrow">How to play</p>
+  <div class="frame">
+    <div class="tbar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span><span class="u">penn-goats · how to play</span></div>
+    <div class="body">
+      <div class="th"><h2>How it works</h2></div>
+      <p class="lbnote">Five years, one month at a time. Each month:</p>
+      <div class="steps">
+        <div class="step"><div class="no">1</div><div><div class="st">A paycheck arrives</div><div class="sd">See what's really left after taxes — take-home, not the offer.</div></div></div>
+        <div class="step"><div class="no">2</div><div><div class="st">Essentials come out</div><div class="sd">Rent, food, transport, utilities are paid automatically.</div></div></div>
+        <div class="step"><div class="no">3</div><div><div class="st">Life happens</div><div class="sd">A surprise hits — a repair, a bonus, sometimes a layoff.</div></div></div>
+        <div class="step"><div class="no">4</div><div><div class="st">You choose</div><div class="sd">Invest, pay down debt, treat yourself, or make a big move.</div></div></div>
+      </div>
+      <p class="lbnote" style="margin-top:16px">Reach your net-worth goal by month 60 to win. Run out of cash for too long, or let happiness hit zero, and it's over. Watch your four rings:</p>
+      <div class="legend">
+        <span><i style="background:var(--cash)"></i>Cash — money on hand</span>
+        <span><i style="background:var(--invest)"></i>Investments — grows or shrinks</span>
+        <span><i style="background:var(--debt)"></i>Debt — what you owe</span>
+        <span><i style="background:var(--happy)"></i>Happiness — 0 = burnout</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD -->
+  <p class="eyebrow">Leaderboard — social, not the point</p>
+  <div class="frame">
+    <div class="tbar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span><span class="u">penn-goats · friends</span></div>
+    <div class="body">
+      <div class="th"><h2>How your friends are doing</h2></div>
+      <div class="lrow"><span class="rk num">1</span><div class="av">🐐</div><div><div class="nm">Priya</div><div class="tt">Budget GOAT</div></div><span class="nw num">$71,200</span></div>
+      <div class="lrow"><span class="rk num">2</span><div class="av">🐐</div><div><div class="nm">Marcus</div><div class="tt">Dug Out</div></div><span class="nw num">$62,900</span></div>
+      <div class="lrow you"><span class="rk num">3</span><div class="av">🐐</div><div><div class="nm">You</div><div class="tt">Loan Slayer</div></div><span class="nw num">$58,400</span></div>
+      <div class="lrow"><span class="rk num">4</span><div class="av">🐐</div><div><div class="nm">Dana</div><div class="tt">Homeowner</div></div><span class="nw num">$41,050</span></div>
+      <div class="lrow"><span class="rk num">5</span><div class="av">🐐</div><div><div class="nm">Sam</div><div class="tt">Treading Water</div></div><span class="nw num">$12,300</span></div>
+    </div>
+  </div>
+
+  <p class="pagesub" style="margin-top:26px">Titles are computed from <code style="color:var(--invest)">state.history</code> at game-end and shown on Results ("Title earned: …") plus this collection screen — a reason to replay with a different style. The leaderboard stays intentionally low-key (the differentiation guide warns against making it the motivator). Tell me which titles to keep/cut/rename, and I'll write the full list into the design doc.</p>
+</div>
+</body>
+</html>

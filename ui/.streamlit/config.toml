@@ -1,0 +1,39 @@
+# Dark theme for the Penn Goats UI. Purple primary nods to the purple-goat mascot.
+[theme]
+base = "dark"
+primaryColor = "#8b6dff"
+backgroundColor = "#0e1117"
+secondaryBackgroundColor = "#191c24"
+textColor = "#e8e8ea"
+# Inter as the app-wide base font. The files are self-hosted under ui/static/
+# and served by Streamlit -- an @import inside st.markdown does not reliably
+# load, and self-hosting means no external CDN dependency (works offline).
+font = "Inter"
+
+[[theme.fontFaces]]
+family = "Inter"
+url = "app/static/inter-400.woff2"
+weight = 400
+style = "normal"
+
+[[theme.fontFaces]]
+family = "Inter"
+url = "app/static/inter-500.woff2"
+weight = 500
+style = "normal"
+
+[[theme.fontFaces]]
+family = "Inter"
+url = "app/static/inter-600.woff2"
+weight = 600
+style = "normal"
+
+[[theme.fontFaces]]
+family = "Inter"
+url = "app/static/inter-700.woff2"
+weight = 700
+style = "normal"
+
+[server]
+runOnSave = true
+enableStaticServing = true

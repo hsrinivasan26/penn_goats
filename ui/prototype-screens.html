@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Penn Goats — Title · Choose your start · Results</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0e1117;--surface:#191c24;--surface2:#20242e;--inset:#12151c;--border:#2a2f3a;
+    --text:#e8e8ea;--muted:#9aa0ac;--faint:#6b7280;--purple:#8b6dff;
+    --cash:#34d399;--invest:#f5b642;--debt:#ef4444;--happy:#3aa0e6;
+    --disp:"Inter",system-ui,sans-serif;--body:"Inter",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#07090d;color:var(--text);font-family:var(--body);line-height:1.5;
+    -webkit-font-smoothing:antialiased;padding:34px 20px 70px}
+  .page{max-width:1000px;margin:0 auto}
+  h1,h2,h3,h4{font-family:var(--disp);letter-spacing:-.02em;margin:0}
+  .num{font-variant-numeric:tabular-nums}
+  .pagehead{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+  .pagehead .logo{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:20px;
+    background:linear-gradient(150deg,#2a2350,#1a1d24);border:1px solid #3a3170}
+  .pagehead h1{font-size:20px}
+  .pagesub{color:var(--muted);font-size:13.5px;margin:0 0 8px;max-width:660px}
+  .eyebrow{font-family:var(--disp);font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--purple);margin:38px 0 14px;display:flex;align-items:center;gap:10px}
+  .eyebrow::after{content:"";height:1px;flex:1;background:linear-gradient(90deg,var(--border),transparent)}
+
+  .frame{border:1px solid #262b34;border-radius:16px;overflow:hidden;background:var(--bg);
+    box-shadow:0 40px 90px -40px rgba(0,0,0,.9)}
+  .tbar{display:flex;align-items:center;gap:8px;padding:10px 13px;background:#14171e;border-bottom:1px solid #23272f}
+  .tbar .dot{width:10px;height:10px;border-radius:50%}
+  .tbar .u{margin-left:10px;color:var(--faint);font-size:11.5px;font-family:var(--disp)}
+  .btn{border-radius:12px;padding:12px 18px;font-family:var(--disp);font-weight:600;font-size:14px;
+    border:1px solid var(--border);background:var(--surface2);color:var(--text);display:inline-block;text-align:center}
+  .btn.primary{background:linear-gradient(180deg,#9b7dff,#7c5cff);border:none;color:#fff;box-shadow:0 10px 24px -8px rgba(124,92,255,.7)}
+  .btn.ghost{background:transparent}
+
+  /* ---------- 1. TITLE ---------- */
+  .title{min-height:440px;display:grid;place-items:center;text-align:center;padding:40px;
+    background:radial-gradient(120% 90% at 50% 0%,rgba(139,109,255,.18),transparent 60%),#0c0e14}
+  .title .goat{font-size:78px;filter:drop-shadow(0 8px 30px rgba(139,109,255,.5))}
+  .title .brand{font-family:var(--disp);font-weight:700;font-size:44px;letter-spacing:-.03em;margin-top:8px}
+  .title .brand .p{color:var(--purple)}
+  .title .hook{font-family:var(--disp);font-size:16px;color:var(--text);margin-top:10px}
+  .title .tag{color:var(--muted);font-size:13.5px;margin-top:6px}
+  .title .cta{margin-top:26px;display:flex;gap:12px;justify-content:center}
+  .title .cta .btn.primary{padding:13px 40px;font-size:15px}
+
+  /* ---------- 2. CHOOSE ---------- */
+  .choose{padding:30px}
+  .choose h2{font-size:24px;text-align:center}
+  .choose .cs{color:var(--muted);font-size:13.5px;text-align:center;margin:6px 0 24px}
+  .paths{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:720px;margin:0 auto}
+  @media(max-width:700px){.paths{grid-template-columns:1fr}}
+  .pcard{border:1px solid var(--border);border-radius:16px;background:var(--surface);padding:20px;display:flex;flex-direction:column}
+  .pcard.b{border-color:#3a3170}
+  .pcard .pn{font-family:var(--disp);font-weight:700;font-size:18px}
+  .pcard .pd{color:var(--muted);font-size:13px;margin:6px 0 16px;min-height:38px}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+  .stat{background:var(--inset);border:1px solid var(--border);border-radius:11px;padding:9px 11px}
+  .stat .sl{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .stat .sv{font-family:var(--disp);font-weight:600;font-size:15px;margin-top:2px}
+  .pcard .btn{margin-top:auto}
+
+  /* ---------- 3. RESULTS ---------- */
+  .results{padding:28px 30px}
+  .rbanner{text-align:center;margin-bottom:22px}
+  .rbanner .badge{display:inline-flex;align-items:center;gap:8px;font-family:var(--disp);font-weight:700;
+    font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--cash);
+    border:1px solid #205040;background:#0f1f19;border-radius:999px;padding:6px 14px}
+  .rbanner h2{font-size:30px;margin-top:12px}
+  .rbanner h2 .p{color:var(--purple)}
+  .rbanner .rs{color:var(--muted);font-size:14px;margin-top:6px}
+
+  .chartwrap{background:var(--inset);border:1px solid var(--border);border-radius:16px;padding:16px 14px 8px;margin-bottom:18px}
+  .chartwrap svg{width:100%;height:auto;display:block}
+
+  .rstats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+  @media(max-width:640px){.rstats{grid-template-columns:1fr 1fr}}
+  .rstat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;text-align:center}
+  .rstat .rl{font-size:11px;color:var(--muted)}
+  .rstat .rv{font-family:var(--disp);font-weight:700;font-size:19px;margin-top:3px}
+
+  .coach{display:flex;gap:13px;background:linear-gradient(180deg,#1d1a2e,#16141d);border:1px solid #3a3170;
+    border-radius:14px;padding:16px}
+  .coach .face{width:46px;height:46px;flex:none;border-radius:13px;display:grid;place-items:center;font-size:24px;
+    background:radial-gradient(circle at 40% 30%,#3a3170,#241f45);border:1px solid #4a3f8a}
+  .coach .ct{font-family:var(--disp);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--purple);font-weight:600}
+  .coach p{margin:5px 0 0;font-size:13.5px;line-height:1.5}
+  .rfoot{display:flex;gap:12px;justify-content:center;margin-top:20px}
+
+  .note{color:var(--faint);font-size:12.5px;margin-top:14px;text-align:center}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="pagehead"><div class="logo">🐐</div><h1>Penn Goats — the other screens</h1></div>
+  <p class="pagesub">Title, Choose-your-start, and Results (with the net-worth-over-time chart). Same dark/rounded/rings language and the tier-2 copy rule — the numbers do the teaching.</p>
+
+  <!-- 1. TITLE -->
+  <p class="eyebrow">1 · Title / Start</p>
+  <div class="frame">
+    <div class="tbar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span><span class="u">penn-goats</span></div>
+    <div class="title">
+      <div>
+        <div class="goat">🐐</div>
+        <div class="brand">Penn <span class="p">Goats</span></div>
+        <div class="hook">From broke new hire to Budget GOAT.</div>
+        <div class="tag">A money game about your first real paychecks.</div>
+        <div class="cta">
+          <span class="btn primary">Start</span>
+          <span class="btn ghost">How to play</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. CHOOSE -->
+  <p class="eyebrow">2 · Choose your start</p>
+  <div class="frame">
+    <div class="tbar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span><span class="u">penn-goats · new game</span></div>
+    <div class="choose">
+      <h2>Choose your start</h2>
+      <p class="cs">Two different lives — both winnable, and about equally tough.</p>
+      <div class="paths">
+        <div class="pcard">
+          <div class="pn">Starting from scratch</div>
+          <div class="pd">No degree, no debt. Lower pay, but a clean slate.</div>
+          <div class="stats">
+            <div class="stat"><div class="sl">Pay / mo</div><div class="sv num">$3,300</div></div>
+            <div class="stat"><div class="sl">Debt</div><div class="sv num">$0</div></div>
+            <div class="stat"><div class="sl">Cash</div><div class="sv num">$500</div></div>
+            <div class="stat"><div class="sl">Goal</div><div class="sv num">$23,000</div></div>
+          </div>
+          <span class="btn primary">Start this life</span>
+        </div>
+        <div class="pcard b">
+          <div class="pn">Fresh graduate</div>
+          <div class="pd">A degree and a bigger paycheck — and a $30k loan to dig out of.</div>
+          <div class="stats">
+            <div class="stat"><div class="sl">Pay / mo</div><div class="sv num">$5,000</div></div>
+            <div class="stat"><div class="sl">Debt</div><div class="sv num" style="color:var(--debt)">$30,000</div></div>
+            <div class="stat"><div class="sl">Cash</div><div class="sv num">$500</div></div>
+            <div class="stat"><div class="sl">Goal</div><div class="sv num">$68,000</div></div>
+          </div>
+          <span class="btn primary">Start this life</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. RESULTS -->
+  <p class="eyebrow">3 · Results (a win — same layout handles the losses)</p>
+  <div class="frame">
+    <div class="tbar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span><span class="u">penn-goats · results</span></div>
+    <div class="results">
+      <div class="rbanner">
+        <span class="badge">🐐 You did it</span>
+        <h2>Budget <span class="p">GOAT</span></h2>
+        <div class="rs">You climbed from −$29,500 to a real buffer in 60 months.</div>
+      </div>
+
+      <div class="chartwrap">
+        <svg viewBox="0 0 520 190" role="img" aria-label="Net worth over time">
+          <defs>
+            <linearGradient id="ln" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#ef4444"/><stop offset="0.35" stop-color="#f5b642"/>
+              <stop offset="0.7" stop-color="#34d399"/><stop offset="1" stop-color="#8b6dff"/>
+            </linearGradient>
+            <linearGradient id="ar" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#34d399" stop-opacity="0.22"/><stop offset="1" stop-color="#34d399" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <!-- goal line -->
+          <line x1="40" y1="30" x2="500" y2="30" stroke="#5a4a1a" stroke-dasharray="4 4"/>
+          <text x="498" y="24" text-anchor="end" fill="#c99b3a" font-size="10" font-family="Inter">$68k goal</text>
+          <!-- zero line -->
+          <line x1="40" y1="127" x2="500" y2="127" stroke="#242a35"/>
+          <text x="36" y="131" text-anchor="end" fill="#6b7280" font-size="10" font-family="Inter">$0</text>
+          <!-- area + line -->
+          <path d="M40,169 L79,164 L126,157 L173,147 L219,134 L266,119 L313,101 L360,84 L406,66 L453,47 L500,29 L500,175 L40,175 Z" fill="url(#ar)"/>
+          <polyline points="40,169 79,164 126,157 173,147 219,134 266,119 313,101 360,84 406,66 453,47 500,29"
+            fill="none" stroke="url(#ln)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle cx="40" cy="169" r="4" fill="#ef4444"/>
+          <circle cx="500" cy="29" r="5" fill="#34d399" stroke="#0e1117" stroke-width="2"/>
+          <text x="40" y="188" fill="#6b7280" font-size="10" font-family="Inter">Month 1</text>
+          <text x="500" y="188" text-anchor="end" fill="#6b7280" font-size="10" font-family="Inter">Month 60</text>
+        </svg>
+      </div>
+
+      <div class="rstats">
+        <div class="rstat"><div class="rl">Final net worth</div><div class="rv num" style="color:var(--cash)">$69,000</div></div>
+        <div class="rstat"><div class="rl">Goal</div><div class="rv num">$68,000 ✓</div></div>
+        <div class="rstat"><div class="rl">Months survived</div><div class="rv num">60</div></div>
+        <div class="rstat"><div class="rl">Happiness</div><div class="rv num" style="color:var(--happy)">78</div></div>
+      </div>
+
+      <div class="coach">
+        <div class="face">🐐</div>
+        <div>
+          <div class="ct">Your coach</div>
+          <p>You started $29,500 in the hole and clawed your way to a real cushion. Things turned the month you cleared the credit card — from there your net worth only went up. That's the whole game.</p>
+        </div>
+      </div>
+
+      <div class="rfoot"><span class="btn ghost">Main menu</span><span class="btn primary">Play again</span></div>
+      <p class="note">The lose screens (bankruptcy, burnout, out of time) use this same layout — the chart shows where the run ended and the coach explains why.</p>
+    </div>
+  </div>
+
+  <p class="pagesub" style="margin-top:26px">The results chart is a hand-drawn SVG from <code style="color:var(--invest)">state.history</code> — the line runs red→gold→emerald→purple as you climb out of debt into the win. Tell me what to adjust (the hook copy, the path names, the chart styling) and I'll fold it into the design doc, then start the Streamlit build.</p>
+</div>
+</body>
+</html>

@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Penn Goats — desktop mockup (rings + right rail)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0e1117; --surface:#191c24; --surface2:#20242e; --inset:#12151c;
+    --border:#2a2f3a; --text:#e8e8ea; --muted:#9aa0ac; --faint:#6b7280;
+    --purple:#8b6dff;
+    --cash:#34d399;         /* emerald  */
+    --invest:#f5b642;       /* gold     */
+    --debt:#ef4444;         /* red (per request) */
+    --happy:#3aa0e6;        /* sky-blue at 72 (dynamic: bright sky when high, -> black when low) */
+    --disp:"Inter",system-ui,sans-serif;
+    --body:"Inter",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#07090d;color:var(--text);font-family:var(--body);line-height:1.5;
+    -webkit-font-smoothing:antialiased;padding:34px 20px 70px}
+  .page{max-width:1200px;margin:0 auto}
+  h1,h2,h3,h4{font-family:var(--disp);letter-spacing:-.02em;margin:0}
+  .num{font-variant-numeric:tabular-nums}
+  .pagehead{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+  .pagehead .logo{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:20px;
+    background:linear-gradient(150deg,#2a2350,#1a1d24);border:1px solid #3a3170}
+  .pagehead h1{font-size:20px}
+  .pagesub{color:var(--muted);font-size:13.5px;margin:0 0 22px}
+
+  /* faux desktop window */
+  .window{border:1px solid #262b34;border-radius:16px;overflow:hidden;background:var(--bg);
+    box-shadow:0 40px 90px -40px rgba(0,0,0,.9)}
+  .titlebar{display:flex;align-items:center;gap:8px;padding:11px 14px;background:#14171e;border-bottom:1px solid #23272f}
+  .titlebar .dot{width:11px;height:11px;border-radius:50%}
+  .titlebar .u{margin-left:12px;color:var(--faint);font-size:12px;font-family:var(--disp)}
+  .app{display:grid;grid-template-columns:1fr 250px;min-height:560px}
+  @media(max-width:820px){.app{grid-template-columns:1fr}}
+
+  /* ---- left: the scene ---- */
+  .main{padding:22px 24px}
+  .appbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+  .appbar .brand{display:flex;align-items:center;gap:10px}
+  .appbar .brand .g{font-size:22px}
+  .appbar .brand b{font-family:var(--disp);font-size:17px}
+  .appbar .brand .mo{color:var(--muted);font-size:13px;margin-left:4px}
+  .goalchip{font-family:var(--disp);font-size:12.5px;color:var(--muted);border:1px solid var(--border);
+    border-radius:999px;padding:6px 13px}
+  .goalchip b{color:var(--text)}
+
+  .who{display:flex;align-items:center;gap:13px;margin-bottom:20px}
+  .who .face{width:56px;height:56px;border-radius:16px;display:grid;place-items:center;font-size:30px;
+    background:radial-gradient(circle at 40% 30%,#3a3170,#241f45);border:1px solid #4a3f8a}
+  .who .bio b{font-size:16px}
+  .who .bio div{color:var(--muted);font-size:13px}
+  .who .slot{margin-left:auto;border:1px dashed #3a4150;border-radius:10px;padding:7px 11px;
+    color:var(--faint);font-size:11px;max-width:150px;text-align:center}
+
+  /* paycheck reveal — the signature moment */
+  .pay{background:linear-gradient(180deg,#1b1e27,#15181f);border:1px solid var(--border);border-radius:16px;
+    padding:20px 22px;margin-bottom:16px}
+  .pay .cap{font-family:var(--disp);font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--purple);font-weight:600}
+  .pay .flow{display:flex;align-items:center;gap:26px;flex-wrap:wrap;margin-top:12px}
+  .pay .blk .k{font-size:12px;color:var(--muted)}
+  .pay .blk .g{font-family:var(--disp);font-weight:700;font-size:26px;color:var(--muted)}
+  .pay .blk .n{font-family:var(--disp);font-weight:700;font-size:38px;color:var(--cash);line-height:1.05}
+  .pay .arrow{color:var(--faint);font-size:22px}
+  .pay .cuts{margin-left:auto;text-align:right;font-size:12.5px;color:var(--muted);min-width:150px}
+  .pay .cuts .r{display:flex;justify-content:space-between;gap:18px;padding:2px 0}
+  .pay .cuts .r .v{color:var(--debt)}
+  .pay .note{font-size:12px;color:var(--faint);margin-top:12px}
+
+  .event{background:linear-gradient(180deg,#241a1c,#1a1418);border:1px solid #4a2f36;border-radius:14px;
+    padding:14px 16px;margin-bottom:16px}
+  .event .lab{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#fb7185;font-weight:600}
+  .event .title{font-family:var(--disp);font-weight:600;font-size:15px;margin-top:5px}
+  .event .cost{color:var(--debt);font-family:var(--disp);font-weight:600}
+
+  .acts{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{border-radius:12px;padding:11px 16px;font-family:var(--disp);font-weight:600;font-size:13px;
+    border:1px solid var(--border);background:var(--surface2);color:var(--text)}
+  .btn.primary{margin-left:auto;background:linear-gradient(180deg,#9b7dff,#7c5cff);border:none;color:#fff;
+    box-shadow:0 10px 22px -8px rgba(124,92,255,.7)}
+
+  /* ---- right rail: the 4 rings, vertical, always visible ---- */
+  .rail{background:#0b0d12;border-left:1px solid #20242e;padding:20px 16px;display:flex;flex-direction:column;gap:6px}
+  .railcap{font-family:var(--disp);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);
+    margin-bottom:8px;text-align:center}
+  .ringitem{position:relative;display:flex;align-items:center;gap:13px;padding:9px 8px;border-radius:12px;cursor:default}
+  .ringitem:hover{background:#12151c}
+  .ring{position:relative;width:70px;height:70px;flex:none}
+  .ring svg{transform:rotate(-90deg)}
+  .ring .rc{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+  .ring .rv{font-family:var(--disp);font-weight:700;font-size:13px}
+  .rmeta .rn{font-size:13px;font-weight:600}
+  .rmeta .rd{font-size:11.5px;color:var(--muted)}
+
+  /* tooltips — appear to the LEFT of the ring (rail is on the right) */
+  .tip{position:absolute;right:calc(100% + 10px);top:50%;transform:translateY(-50%) translateX(6px);
+    width:236px;background:#0f1218;border:1px solid #333a47;border-radius:12px;padding:12px 13px;
+    box-shadow:0 18px 40px -18px rgba(0,0,0,.9);opacity:0;visibility:hidden;transition:.14s ease;z-index:5;pointer-events:none}
+  .ringitem:hover .tip{opacity:1;visibility:visible;transform:translateY(-50%) translateX(0)}
+  .tip.open{opacity:1;visibility:visible;transform:translateY(-50%) translateX(0)}
+  .tip::after{content:"";position:absolute;right:-6px;top:50%;transform:translateY(-50%) rotate(45deg);
+    width:11px;height:11px;background:#0f1218;border-right:1px solid #333a47;border-top:1px solid #333a47}
+  .tip .tt{font-family:var(--disp);font-weight:600;font-size:13px;margin-bottom:4px}
+  .tip p{margin:0;font-size:12px;color:var(--muted);line-height:1.45}
+  .tip .prog{height:7px;border-radius:999px;background:#1b1f28;margin:9px 0 6px;overflow:hidden;position:relative}
+  .tip .prog > i{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:linear-gradient(90deg,#34d399,#8b6dff)}
+  .tip .gap{font-size:11px;color:var(--faint)}
+  .tip .demo{font-size:10px;color:var(--purple);font-family:var(--disp);letter-spacing:.05em;margin-top:8px;text-transform:uppercase}
+
+  .nwrail{margin-top:auto;border-top:1px solid #20242e;padding-top:14px;text-align:center}
+  .nwrail .k{font-size:11px;color:var(--muted)}
+  .nwrail .v{font-family:var(--disp);font-weight:700;font-size:20px;color:var(--debt)}
+
+  /* happiness color scale note */
+  .hscale{margin-top:14px;font-size:11px;color:var(--faint)}
+  .hscale .row{display:flex;align-items:center;gap:7px;margin-top:5px}
+  .hscale .sw{width:20px;height:20px;border-radius:6px;flex:none;border:1px solid #2a2f3a}
+
+  .caption{color:var(--muted);font-size:13px;margin-top:18px;display:flex;gap:20px;flex-wrap:wrap}
+  .caption b{color:var(--text)}
+  .caption .k{display:inline-flex;align-items:center;gap:7px}
+  .caption .k i{width:10px;height:10px;border-radius:3px;display:inline-block}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="pagehead"><div class="logo">🐐</div><h1>Penn Goats — desktop mockup</h1></div>
+  <p class="pagesub">Rings as an always-visible vertical rail on the right · red debt · gold investments · happiness sky-blue→black · hover any ring for a tooltip (Cash is shown open as an example).</p>
+
+  <div class="window">
+    <div class="titlebar">
+      <span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span>
+      <span class="u">penn-goats · month 14</span>
+    </div>
+
+    <div class="app">
+      <!-- LEFT: scene -->
+      <div class="main">
+        <div class="appbar">
+          <div class="brand"><span class="g">🐐</span><b>Penn Goats</b><span class="mo">· Month 14 of 60</span></div>
+          <div class="goalchip">Goal: <b>$68,000</b> net worth</div>
+        </div>
+
+        <div class="who">
+          <div class="face">🐐</div>
+          <div class="bio"><b>You</b><div>Junior analyst · renting a studio · feeling okay</div></div>
+          <div class="slot">real goat mascot art slots in here later</div>
+        </div>
+
+        <div class="pay">
+          <div class="cap">Payday</div>
+          <div class="flow">
+            <div class="blk"><div class="k">Your offer said</div><div class="g num">$5,000</div></div>
+            <div class="arrow">→</div>
+            <div class="blk"><div class="k">Actually lands</div><div class="n num">$3,867</div></div>
+            <div class="cuts">
+              <div class="r"><span>Federal tax</span><span class="v num">−$600</span></div>
+              <div class="r"><span>State tax</span><span class="v num">−$150</span></div>
+              <div class="r"><span>FICA</span><span class="v num">−$383</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="event">
+          <div class="lab">Life happens</div>
+          <div class="title">Brake job on the car — <span class="cost num">−$180</span></div>
+        </div>
+
+        <div class="acts">
+          <div class="btn">Invest</div>
+          <div class="btn">Leisure</div>
+          <div class="btn">Pay debt</div>
+          <div class="btn">Big move</div>
+          <div class="btn primary">End the month ▶</div>
+        </div>
+      </div>
+
+      <!-- RIGHT: rings rail -->
+      <div class="rail">
+        <div class="railcap">Your standing</div>
+
+        <!-- Cash (tooltip shown open as the example) -->
+        <div class="ringitem">
+          <div class="ring">
+            <svg width="70" height="70"><circle cx="35" cy="35" r="28" stroke="var(--inset)" stroke-width="7" fill="none"/>
+              <circle cx="35" cy="35" r="28" stroke="var(--cash)" stroke-width="7" fill="none" stroke-linecap="round" stroke-dasharray="175.9" stroke-dashoffset="96.7"/></svg>
+            <div class="rc"><span class="rv num" style="color:var(--cash)">$3.7k</span></div>
+          </div>
+          <div class="rmeta"><div class="rn">Cash</div><div class="rd">on hand</div></div>
+          <div class="tip open">
+            <div class="tt">Net worth −$18,695</div>
+            <p>Below zero from your student loan — <b>not a loss here</b>. Goal: <b>$68,000</b>.</p>
+            <div class="demo">← example · see the 3 states below</div>
+          </div>
+        </div>
+
+        <!-- Investments -->
+        <div class="ringitem">
+          <div class="ring">
+            <svg width="70" height="70"><circle cx="35" cy="35" r="28" stroke="var(--inset)" stroke-width="7" fill="none"/>
+              <circle cx="35" cy="35" r="28" stroke="var(--invest)" stroke-width="7" fill="none" stroke-linecap="round" stroke-dasharray="175.9" stroke-dashoffset="123.1"/></svg>
+            <div class="rc"><span class="rv num" style="color:var(--invest)">$2.1k</span></div>
+          </div>
+          <div class="rmeta"><div class="rn">Investments</div><div class="rd">growing</div></div>
+          <div class="tip">
+            <div class="tt">Investments · $2,140</div>
+            <p>Index, growth, or crypto. Value rises and falls with the market.</p>
+          </div>
+        </div>
+
+        <!-- Debt -->
+        <div class="ringitem">
+          <div class="ring">
+            <svg width="70" height="70"><circle cx="35" cy="35" r="28" stroke="var(--inset)" stroke-width="7" fill="none"/>
+              <circle cx="35" cy="35" r="28" stroke="var(--debt)" stroke-width="7" fill="none" stroke-linecap="round" stroke-dasharray="175.9" stroke-dashoffset="42.2"/></svg>
+            <div class="rc"><span class="rv num" style="color:var(--debt)">$24k</span></div>
+          </div>
+          <div class="rmeta"><div class="rn">Debt</div><div class="rd">student loan</div></div>
+          <div class="tip">
+            <div class="tt">Debt · $24,560</div>
+            <p>Mostly your student loan · 6% APR.</p>
+          </div>
+        </div>
+
+        <!-- Happiness -->
+        <div class="ringitem">
+          <div class="ring">
+            <svg width="70" height="70"><circle cx="35" cy="35" r="28" stroke="var(--inset)" stroke-width="7" fill="none"/>
+              <circle cx="35" cy="35" r="28" stroke="var(--happy)" stroke-width="7" fill="none" stroke-linecap="round" stroke-dasharray="175.9" stroke-dashoffset="49.3"/></svg>
+            <div class="rc"><span class="rv num" style="color:var(--happy)">72</span></div>
+          </div>
+          <div class="rmeta"><div class="rn">Happiness</div><div class="rd">/ 100</div></div>
+          <div class="tip">
+            <div class="tt">Happiness · 72</div>
+            <p>Falls a little each month. At 0 you burn out (a loss).</p>
+          </div>
+        </div>
+
+        <div class="nwrail"><div class="k">Net worth</div><div class="v num">−$18,695</div></div>
+      </div>
+    </div>
+  </div>
+
+  <section style="margin-top:30px">
+    <h2 style="font-size:16px;margin-bottom:4px">Cash tooltip — three states <span style="color:var(--faint);font-weight:400;font-size:13px">(the fix)</span></h2>
+    <p class="pagesub" style="margin:0 0 16px">It now reads the player's situation instead of computing a raw "distance to goal." Below-zero net worth is normal (not a loss); a red warning appears only when they're genuinely near losing.</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px">
+        <div style="font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--cash);font-weight:600;font-family:var(--disp)">On track</div>
+        <div style="font-family:var(--disp);font-weight:600;font-size:14px;margin:8px 0 0">$12,400 of your $23,000 goal</div>
+        <div style="height:7px;border-radius:999px;background:var(--inset);overflow:hidden;margin:9px 0"><i style="display:block;height:100%;width:54%;background:linear-gradient(90deg,#34d399,#8b6dff)"></i></div>
+        <p style="margin:0;font-size:12px;color:var(--muted)">$10,600 to go.</p>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px">
+        <div style="font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;font-family:var(--disp)">Below zero · stable</div>
+        <div style="font-family:var(--disp);font-weight:600;font-size:14px;margin:8px 0 4px">Net worth −$18,695</div>
+        <p style="margin:0;font-size:12px;color:var(--muted)">Below zero from a student loan isn't a loss here. Goal: $68,000.</p>
+      </div>
+
+      <div style="background:linear-gradient(180deg,#2a1414,#1c1113);border:1px solid #7f1d1d;border-radius:14px;padding:16px;box-shadow:0 0 22px -6px rgba(239,68,68,.35)">
+        <div style="font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--debt);font-weight:700;font-family:var(--disp)">⚠ About to lose</div>
+        <div style="font-family:var(--disp);font-weight:600;font-size:14px;margin:8px 0 4px;color:#fecaca">One month from bankruptcy</div>
+        <p style="margin:0;font-size:12px;color:#f3b0b0">You've missed essentials 2 months running — one more and it's game over. Cover essentials first.</p>
+      </div>
+
+    </div>
+    <p class="pagesub" style="margin-top:12px">The warning triggers on real lose-proximity — a <b style="color:var(--text)">shortfall streak</b> heading toward bankruptcy (or happiness near burnout) — <b style="color:var(--text)">not</b> simply "debt &gt; cash," since carrying student debt is normal here and shouldn't cry wolf. In the live game these read straight off <code style="color:var(--invest)">consecutive_shortfalls</code> and <code style="color:var(--invest)">happiness</code>.</p>
+  </section>
+
+  <div class="caption">
+    <span class="k"><i style="background:var(--cash)"></i><b>Cash</b> emerald</span>
+    <span class="k"><i style="background:var(--invest)"></i><b>Investments</b> gold</span>
+    <span class="k"><i style="background:var(--debt)"></i><b>Debt</b> red</span>
+    <span class="k"><i style="background:var(--happy)"></i><b>Happiness</b> sky-blue → black</span>
+    <span class="k"><i style="background:var(--purple)"></i><b>Actions</b> purple</span>
+  </div>
+  <p class="pagesub" style="margin-top:14px">Hover any ring for a <b>one-line</b> tooltip — the number plus its consequence or rule (e.g. "0 = burnout", the APR, "below zero isn't a loss"), then stop. No strategy — that's the player's to discover and the coach's to reflect on. The ⚠ warning is the one thing that stays actionable (it's a safety signal). Tell me what to adjust and I'll wire it into Streamlit.</p>
+
+</div>
+</body>
+</html>
