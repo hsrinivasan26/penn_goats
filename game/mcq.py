@@ -154,7 +154,7 @@ Each item object:
    unless the NOT is capitalized and the item truly needs it.
 4. Keep options parallel in length and grammar; do not make the correct answer the longest.
 5. Vary the position of the correct answer across items (do not default to B)
-6. Try to have at least one question with more than 4 options.
+6. REQUIRED: at least one question in the set must have MORE than 4 options (5 or 6), not only 4.
 7. Items are self-contained: include any numbers needed in the stem; never reference
    another question.
 8. Use realistic but FICTIONAL figures. For stocks/crypto/funds use generic or invented
@@ -350,6 +350,12 @@ class QuestionBank:
             if item.id in seen:
                 errors.append(f"duplicate item id {item.id!r}")
             seen.add(item.id)
+        # Requirement: a set of questions must include at least one item with MORE
+        # than 4 options (i.e. 5 or 6), so the quiz is not uniformly 4-choice.
+        if self.items and not any(len(item.options) > 4 for item in self.items):
+            errors.append(
+                "the set must include at least one question with more than 4 options (5-6)"
+            )
         return errors
 
     def by_difficulty(self, *levels: str) -> "QuestionBank":

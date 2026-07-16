@@ -244,3 +244,87 @@ and `hard` items so it actually discriminates.
 
 **De-duplication across runs.** Item ids are only unique within a run. When merging banks,
 re-namespace ids (e.g., prefix a batch number) and check for near-duplicate stems.
+
+---
+
+## AI biases & limitations
+
+These questions are LLM-generated, so they inherit biases from the model's training data
+and from the way LLMs write test items. Because a skewed or wrong question misteaches a
+concept — and because this quiz **gates progression** (the 65% private-university gate) — a
+biased item can unfairly help or block a player. Treat every generated bank as a **draft that
+a human reviews before it reaches players.** Below are the failure modes to watch for, how
+each tends to show up in our questions, and how we reduce it.
+
+1. **US-centric / cultural bias.** The model assumes a US framing (FICA, federal/state
+   brackets, US college and mortgage norms). That fits our US young-adult audience, but the
+   rules and numbers are US-specific and shouldn't be treated as universal. *Mitigation:*
+   audience and currency are pinned in `<configuration>`; don't reuse a bank for non-US
+   contexts without review.
+
+2. **Socioeconomic / "normative path" bias.** LLMs lean toward a middle-class default —
+   everyone goes to college, lands a salaried job, buys a home, invests spare cash. This can
+   misrepresent first-gen, low-income, or non-traditional players, and can bake class
+   assumptions into "wants vs. needs." *Mitigation:* review scenarios for assumed disposable
+   income/assets; include paths without college or homeownership; keep essentials realistic.
+
+3. **Financial-opinion-as-fact bias.** The model presents mainstream advice as objectively
+   correct ("index funds are best," "debt is bad," "always buy over rent"), even where the
+   topic is genuinely contested. If a contested opinion becomes the keyed answer, we teach a
+   value as a fact. *Mitigation:* for debatable topics (rent vs. buy, active vs. passive,
+   crypto), key the answer on the *mechanism or trade-off* ("renting avoids maintenance costs
+   and illiquidity"), not a verdict; flag opinionated items in review.
+
+4. **Representation & stereotyping bias (scenario framing).** Names, jobs, genders, and
+   spending in scenario questions can skew — Anglocentric names, gendered occupations
+   (women shopping, men investing), or stereotyped associations. *Mitigation:* vary names and
+   demographics; never tie competence or spending habits to gender/ethnicity; scan the
+   scenario set for a stereotyped pattern.
+
+5. **Factual & math errors (hallucination).** Computed items (net pay, capital-gains,
+   interest, marginal vs. effective rate) are where the keyed answer is most often wrong, and
+   dollar figures for salaries/rent/prices may be outdated. A wrong "correct answer" actively
+   misteaches. *Mitigation:* independently recompute every numeric item; sanity-check dollar
+   amounts against today's reality; treat `hard` computed items as the top review priority.
+
+6. **Item-writing / psychometric bias.** LLMs leave tells a test-savvy student can exploit:
+   the correct option is often the longest or most-qualified, or sits in a habitual position
+   (frequently "B"); distractors with absolute words ("always/never") are predictably wrong;
+   distractors are sometimes implausible (too easy) or, worse, arguably also correct
+   (ambiguous). *Mitigation:* the prompt already tells the model to vary answer position and
+   match option length/grammar (rules #4–5), but verify — check the spread of correct letters
+   across a bank and confirm no distractor is defensible.
+
+7. **Difficulty miscalibration.** The model's easy/medium/hard labels may not match our
+   audience, and difficulty can cluster or be mislabeled — which matters because the gate
+   draws on difficulty. *Mitigation:* sample a few items per tier and confirm the labels fit a
+   grade 8–10 reader; adjust the gate's item pool if a tier is off.
+
+8. **Reading-level / accessibility bias.** Despite the grade 8–10 instruction, the model may
+   slip into jargon or long sentences, disadvantaging readers regardless of their financial
+   knowledge. *Mitigation:* skim for undefined jargon and sentence length — the goal is to
+   test the concept, not reading stamina.
+
+9. **Homogeneity / low diversity.** Across a large bank the model reuses stems, scenarios,
+   and phrasing, so coverage looks broad but variety is thin. *Mitigation:* de-duplicate
+   near-identical stems (see Run notes); generate per-category and vary prompts if needed.
+
+10. **Feedback-loop / fairness risk.** Because the quiz gates progression, any bias above can
+    unfairly block a player (e.g., someone tripped up by a US-centric or ambiguous item is
+    denied the private-university path). *Mitigation:* keep the gate pool reviewed and
+    unambiguous; consider allowing retries; watch which items are missed most.
+
+11. **Automation bias (ours, not the model's).** The biggest risk is trusting the output
+    because it's fast and well-formatted. *Mitigation:* every bank is a draft until a human
+    signs off.
+
+### Quick review checklist (per generated bank)
+
+- [ ] Recomputed every numeric answer; the keyed option is correct.
+- [ ] No keyed answer states a contested opinion as fact.
+- [ ] Correct-answer letters are spread out; the correct option isn't consistently the longest.
+- [ ] Every distractor is plausible and clearly wrong (no second defensible answer).
+- [ ] Scenario names / jobs / demographics are varied and non-stereotyped.
+- [ ] Difficulty labels feel right; the gate pool (medium/hard) is clean.
+- [ ] Reading level ~grade 8–10; no undefined jargon.
+- [ ] No near-duplicate stems.
