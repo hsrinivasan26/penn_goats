@@ -15,6 +15,12 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) 
 import random
 import streamlit as st
 
+try:                                   # load .env so GEMINI_API_KEY reaches the AI features
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
+
 import config
 from game.state import new_game
 from game.rng import SeededRNG
