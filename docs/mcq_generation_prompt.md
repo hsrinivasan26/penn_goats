@@ -111,7 +111,7 @@ Top level:
 - "coverage_manifest": object mapping each category CODE -> object mapping each subtopic
   slug -> array of the item ids that assess it.
 - "self_check": object with booleans "every_in_scope_subtopic_covered",
-  "each_item_has_exactly_one_correct_option", "all_items_have_four_options", and a
+  "each_item_has_exactly_one_correct_option", "all_items_have_4_to_6_options", and a
   "notes" string (record any assumptions or gaps).
 
 Each item object:
@@ -123,23 +123,26 @@ Each item object:
 - "difficulty": string, "easy" | "medium" | "hard".
 - "bloom_level": string, "recall" | "understand" | "apply" | "analyze".
 - "stem": string, the question text (self-contained).
-- "options": array of EXACTLY 4 objects, each:
-    { "id": "A"|"B"|"C"|"D", "text": string, "is_correct": boolean,
+- "options": array of 4 to 6 objects (a RANDOM count in that range; ids "A"-"F"), each:
+    { "id": "A"|"B"|"C"|"D"|"E"|"F", "text": string, "is_correct": boolean,
       "distractor_rationale": string }   // for the correct option, use "correct answer"
-- "correct_option_id": string, "A" | "B" | "C" | "D" (exactly one item is_correct=true).
+- "correct_option_id": string, "A" .. "F" (exactly one option is_correct=true).
 - "explanation": string, 1–3 sentences teaching why the answer is right.
 - "misconception_tags": array of short strings naming the misconception each distractor targets.
 - "learning_objective": string, one sentence.
 </output_format>
 
 <item_rules>
-1. Exactly 4 options (A–D); exactly ONE is correct.
+1. A RANDOM 4–6 options (A–F); exactly ONE is correct. At least one item in a set must
+   have more than 4 options (5–6), so the quiz is not uniformly 4-choice.
 2. Exactly one defensibly-best answer. Every distractor must be plausible and target a
    SPECIFIC named misconception (state it in distractor_rationale and misconception_tags).
 3. No "All of the above" / "None of the above". Avoid negative stems ("which is NOT")
    unless the NOT is capitalized and the item truly needs it.
 4. Keep options parallel in length and grammar; do not make the correct answer the longest.
-5. Vary the position of the correct answer across items (do not default to B).
+5. Vary the position of the correct answer across items (do not default to B). Note: the
+   code also shuffles each item's options after generation (parse_bank → shuffle_item_options),
+   so the correct position ends up uniformly random regardless — but still vary it.
 6. Items are self-contained: include any numbers needed in the stem; never reference
    another question.
 7. Use realistic but FICTIONAL figures. For stocks/crypto/funds use generic or invented
@@ -291,9 +294,10 @@ each tends to show up in our questions, and how we reduce it.
    the correct option is often the longest or most-qualified, or sits in a habitual position
    (frequently "B"); distractors with absolute words ("always/never") are predictably wrong;
    distractors are sometimes implausible (too easy) or, worse, arguably also correct
-   (ambiguous). *Mitigation:* the prompt already tells the model to vary answer position and
-   match option length/grammar (rules #4–5), but verify — check the spread of correct letters
-   across a bank and confirm no distractor is defensible.
+   (ambiguous). *Mitigation:* the correct answer's POSITION is now shuffled in code after
+   generation (parse_bank → shuffle_item_options), so "always B" cannot happen regardless of
+   the model; the prompt still asks it to vary position and match option length/grammar
+   (rules #4–5). Still verify no distractor is defensible.
 
 7. **Difficulty miscalibration.** The model's easy/medium/hard labels may not match our
    audience, and difficulty can cluster or be mislabeled — which matters because the gate
