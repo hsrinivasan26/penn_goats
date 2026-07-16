@@ -3,3 +3,7 @@ __pycache__/
 .pytest_cache/
 .venv/
 venv/
+
+# secrets & IDE — never commit
+.env
+.idea/
