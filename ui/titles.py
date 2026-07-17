@@ -1,10 +1,8 @@
-"""Completion titles -- computed purely from a finished GameState (read-only).
+"""Completion titles -- computed purely from a finished GameState (read-only, so they can't
+disturb game logic).
 
-A title is metadata (id, name, icon, blurb, kind) plus a rule(state) -> bool checked at
-game-end. Kinds: 'win' (the goal), 'loss' (how a run ended), 'style' (how you played).
-Nothing here writes to the engine, so titles can't disturb the team's game logic. A few
-conditions are approximated from what state.history / balances currently record and can
-tighten later if the engine starts tracking more (e.g. lifetime leisure spend).
+A title is metadata plus a rule(state) -> bool checked at game-end. Kinds: 'win', 'loss',
+'style'. Some conditions are approximated from what history/balances record today.
 """
 
 from game.enums import AssetClass, DebtKind, Housing

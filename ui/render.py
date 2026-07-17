@@ -1,7 +1,4 @@
-"""HTML/CSS render helpers -- build the strings we hand to st.markdown(unsafe_allow_html=True).
-
-All game logic stays in the engine; these functions only turn state into markup.
-"""
+"""HTML render helpers -- turn game state into markup for st.markdown(unsafe_allow_html=True)."""
 
 import config
 
@@ -106,7 +103,7 @@ def paystub_html(stub) -> str:
       </div></div>'''
 
 
-# --- milestone reached (achievement banner) ---
+# --- milestone banner ---
 
 def milestone_html(m) -> str:
     if not m:
@@ -144,13 +141,11 @@ def event_html(payload) -> str:
     return "".join(parts)
 
 
-# --- results: net-worth-over-time chart (hand-drawn SVG from state.history) ---
+# --- results: net-worth-over-time chart ---
 
 def results_chart_html(state) -> str:
-    """Plot net worth across every month played. The line runs red -> gold -> emerald
-    -> purple left to right (the climb out of debt); a dashed goal line and a $0 line
-    give the numbers meaning. All geometry is derived from the data, so the same chart
-    renders a win or a loss."""
+    """Net worth over every month played, as a hand-drawn SVG. All geometry is derived from
+    the data, so the same code renders a win or a loss."""
     hist = state.history or []
     vals = [int(h["net_worth"]) for h in hist]
     turns = [int(h["turn"]) for h in hist]

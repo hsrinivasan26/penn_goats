@@ -1,11 +1,9 @@
 """Drives one turn across Streamlit reruns.
 
 Mirrors game.engine.run_turn, split at the player-choice point so the UI can show the
-paycheck + event, take the player's actions, then finish the turn. Player actions (phase 6)
-happen between begin_month() and end_month() via game.choices.* calls.
+paycheck + event, take the player's actions (phase 6, via game.choices.*), then finish.
 
-KEEP IN SYNC with game.engine.run_turn -- same phase order, same bookkeeping. (When the
-engine settles, this could become an official interactive API in the engine itself.)
+KEEP IN SYNC with game.engine.run_turn -- same phase order, same bookkeeping.
 """
 
 from game.paystub import phase_income
@@ -18,9 +16,7 @@ from game.engine import phase_checks, check_milestones
 
 def begin_month(state, rng):
     """Phases 1-5: income -> markets -> interest -> forced outflows -> tax -> life event.
-
-    Returns the display payload the UI shows before the player acts.
-    """
+    Returns the display payload the UI shows before the player acts."""
     if state.game_over is not None:
         return None
     state.reset_scratch()

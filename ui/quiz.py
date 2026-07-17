@@ -1,10 +1,9 @@
 """Builds the money quiz for the UI, with async prefetching.
 
-One topic per in-game day (rotating via game.mcq.topic_for_day), a random 8-10 questions
-easy -> hard. To avoid stalls, the day's bank is generated on a background thread during
-play (prefetch) and cached; the quiz reads the cached bank if it's ready, and otherwise
-falls back instantly to a built-in bank. Options are pre-shuffled by parse_bank, so the
-correct answer is never stuck at "B".
+One topic per in-game day, a random 8-10 questions easy -> hard. To avoid stalls, the day's
+bank is generated on a background thread during play (prefetch) and cached; if it isn't
+ready the quiz falls back instantly to a built-in bank. Options are pre-shuffled by
+parse_bank, so the correct answer is never stuck at "B".
 """
 
 import os
@@ -16,8 +15,8 @@ from game.mcq import (
     topic_for_day, DIFFICULTY_ORDER,
 )
 
-# Subtopics per category (from the taxonomy) -> used to size each generation so the pool
-# is comfortably >= 10, whatever the topic. Small categories get more per subtopic.
+# Subtopics per category -> used to size each generation so the pool is comfortably >= 10.
+# Small categories get more per subtopic.
 SUBTOPIC_COUNTS = {
     "INCOME": 6, "INVESTING": 10, "TAXES": 3, "DEBT & CREDIT": 6,
     "BUDGETING & CASH FLOW": 4, "NET WORTH & GOALS": 3,

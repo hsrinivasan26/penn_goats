@@ -1,16 +1,13 @@
 """Penn Goats -- Streamlit UI over the pure-Python engine.
 
-    pip install -r ui/requirements.txt
-    streamlit run ui/app.py
-
-Routing between screens (title / choose / play / results) is held in st.session_state.
-ALL game logic lives in game/; this file only renders state and collects the player's moves.
+Screen routing lives in st.session_state; ALL game logic lives in game/ -- this file only
+renders state and collects the player's moves.
 """
 
 import os
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # repo root importable
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import random
 import streamlit as st
@@ -42,9 +39,8 @@ ss = st.session_state
 if "screen" not in ss:
     ss.screen = "title"
 if "earned_titles" not in ss:
-    ss.earned_titles = set()          # collected across every run this session
+    ss.earned_titles = set()
 
-# player-facing framing for the two starting scenarios
 PATH_META = {
     "A": {"name": "Starting from scratch", "desc": "No degree, no debt. Lower pay, but a clean slate."},
     "B": {"name": "Fresh graduate", "desc": "A degree and a bigger paycheck — and a $30k loan to dig out of."},
@@ -116,9 +112,8 @@ def screen_choose():
 
 
 # --------------------------------------------------------------------------
-# Action dialogs -- each opens as a modal over the month (st.dialog).
-# Every dialog reads ss.state directly, calls one engine choice, then reruns
-# to close. Mechanics only in the copy; strategy is left for the coach.
+# Action dialogs -- each opens as a modal (st.dialog), calls one engine choice,
+# then reruns to close.
 # --------------------------------------------------------------------------
 
 ASSET_DESC = {
@@ -257,7 +252,7 @@ def _actions(s):
 
 def screen_play():
     s = ss.state
-    quiz.prefetch(s.turn)          # warm this day's quiz bank in the background (no stall later)
+    quiz.prefetch(s.turn)          # warm this day's quiz bank in the background (no stall)
     st.markdown(f"<div class='apphead'>🐐 <b>Penn Goats</b> &nbsp;·&nbsp; Month {s.turn} of {config.TURN_LIMIT} "
                 f"&nbsp;·&nbsp; goal {render.money(s.target)}</div>", unsafe_allow_html=True)
     left, right = st.columns([3, 1], gap="large")
@@ -370,7 +365,7 @@ def screen_results():
         f"<div class='rv' style='color:#38bdf8'>{s.happiness}</div></div>"
         "</div>", unsafe_allow_html=True)
 
-    # AI coach: generated once per finished game (cached so reruns don't re-hit the model)
+    # cached so reruns don't re-hit the model
     if ss.get("coach_for") != id(s):
         with st.spinner("Your coach is reviewing your run…"):
             ss.coach_text, ss.coach_is_ai = coach.overview(s, outcome)
@@ -409,7 +404,7 @@ def screen_quiz():
     # start view
     if q is None:
         day = ss.get("quiz_day", 0)
-        topic = quiz.prefetch(day)      # start warming the bank while the player reads
+        topic = quiz.prefetch(day)      # warm the bank while the player reads
         st.markdown("<h2 style='margin-bottom:2px'>Money quiz</h2>"
                     f"<p style='color:#9aa0ac;font-size:13.5px'>Today's topic: "
                     f"<b style='color:#e8e8ea'>{topic.title()}</b> — 8–10 questions, easy to hard. "
@@ -439,7 +434,7 @@ def screen_quiz():
             ss.quiz = None; go("title"); st.rerun()
         return
 
-    # review view (feedback for the question just answered)
+    # review view
     if ss.get("quiz_phase") == "review":
         fb = ss.quiz_feedback
         p = fb["prompt"]

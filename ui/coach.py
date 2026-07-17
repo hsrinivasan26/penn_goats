@@ -4,10 +4,6 @@ Generates ONE short debrief of the finished run, grounded strictly in the game's
 figures (so it can't invent numbers), and falls back to a written line when there's no
 GEMINI_API_KEY or the call fails. The Gemini SDK is imported lazily, so this module is
 import-safe without the package installed.
-
-Public API:
-    text, is_ai = overview(state, outcome)          # state = a finished GameState
-    text, is_ai = overview(state, outcome, generator=fake)   # inject for tests
 """
 
 import os
@@ -71,8 +67,8 @@ def _gemini_generate(prompt: str) -> str:
 def overview(state, outcome: str, generator=None):
     """Return (text, is_ai). Uses Gemini when a key is set; otherwise the written fallback.
 
-    `generator` is any callable prompt->str (inject a fake in tests). If it (or Gemini)
-    fails or returns nothing, we fall back to the written line so results never break.
+    `generator` is an injectable prompt->str (a fake in tests). If it or Gemini fails or
+    returns nothing, we fall back to the written line so results never break.
     """
     gen = generator
     if gen is None:
