@@ -169,10 +169,13 @@ Withholding per paycheck = `FEDERAL_RATE + STATE_RATE + FICA_RATE = 0.2265`. Net
 |---|---|
 | `DECAY` | 4 (per turn, always) |
 | `GAIN_SCALE` | 1.5 → `leisure_gain = round(1.5 × sqrt(leisure_spend))` |
-| `STRESS_LIMIT` | 1.0 (debt-to-annual-gross ratio above which stress applies) |
+| `STRESS_LIMIT` | 0.35 *(v1.1.1; was 1.0)* — **weighted**-debt-to-annual-gross ratio above which stress applies |
 | `STRESS_PENALTY` | 5 |
 | `SHORTFALL_PENALTY` | 15 |
 | `happiness_start` | 60 |
+| `STRESS_WEIGHT` *(v1.1.1)* | per-debt-kind stress weight: `credit_card` 1.5 · `tax` 1.2 · `auto` 0.8 · `mortgage` 0.10 · `student` 0.15 |
+
+*(v1.1.1) Debt now weighs on stress by **kind**, not just size — "good debt" (student, mortgage) is light, credit cards are heavy. Phase 7 uses `weighted_debt = Σ principal × STRESS_WEIGHT[kind] (+ tax_owed × STRESS_WEIGHT["tax"])` instead of raw `liabilities_total`. This only feeds the stress→burnout channel; it never triggers a loss on its own.*
 
 **Event table** (exactly one bucket fires per turn; probabilities sum to 100%) *(v1.1 — rebalanced; original was ~90% bankruptcy)*
 | Bucket | Prob (v1.1) | was | Magnitude | Effect |
@@ -321,7 +324,7 @@ BuyCar(price):             either Cash − price, or TakeLoan(price, apr, "auto"
 ```
 h  = happiness
 h -= DECAY
-debt_ratio = liabilities_total / max(1, gross_month × 12)
+debt_ratio = weighted_debt / max(1, gross_month × 12)   # v1.1.1: weighted by debt kind, not raw total
 if debt_ratio > STRESS_LIMIT:  h -= STRESS_PENALTY
 if shortfall_flag:             h -= SHORTFALL_PENALTY
 h += round(GAIN_SCALE × sqrt(leisure_spend))

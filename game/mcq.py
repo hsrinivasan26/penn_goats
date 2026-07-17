@@ -209,7 +209,7 @@ Reference items showing the required format and quality. Do NOT copy these verba
   "stem": "It is turn 30. Devon sells a crypto token for $3,000 that he originally bought for $2,000. The game charges capital-gains tax only on the profit, at 15%. How much tax is added to his liabilities from this sale?",
   "options": [
     { "id": "A", "text": "$150", "is_correct": true, "distractor_rationale": "correct answer" },
-    { "id": "B", "text": "$10", "is_correct": false, "distractor_rationale": "correct answer" },
+    { "id": "B", "text": "$10", "is_correct": false, "distractor_rationale": "Applies about a 1% rate instead of the 15% capital-gains rate." },
     { "id": "C", "text": "$300", "is_correct": false, "distractor_rationale": "Taxes the $2,000 cost basis instead of the gain." },
     { "id": "D", "text": "$450", "is_correct": false, "distractor_rationale": "Taxes the full $3,000 of proceeds, not the profit." },
     { "id": "E", "text": "$0, because selling just moves value into cash.", "is_correct": false, "distractor_rationale": "Assumes selling is untaxed; selling realizes a taxable gain." }
@@ -269,6 +269,25 @@ VALID_OPTION_IDS = ("A", "B", "C", "D", "E", "F")
 
 # Order used when sorting a quiz from easiest to hardest. Unknown values sort last.
 DIFFICULTY_ORDER = {"easy": 0, "medium": 1, "hard": 2}
+
+# The model tags every item easy/medium/hard; these are the player-facing labels.
+DIFFICULTY_LABELS = {"easy": "Beginner", "medium": "Intermediate", "hard": "Advanced"}
+
+# Category names in taxonomy order -- used to run ONE topic per in-game day.
+CATEGORY_NAMES = [
+    "INCOME", "INVESTING", "TAXES", "DEBT & CREDIT",
+    "BUDGETING & CASH FLOW", "NET WORTH & GOALS",
+    "WELLBEING & BEHAVIOR", "RISK & LIFE EVENTS",
+]
+
+
+def topic_for_day(day: int) -> str:
+    """Pick a single category for a given in-game day, rotating through the taxonomy.
+
+    Lets each day's quiz focus on ONE topic (smaller, faster generations and a themed
+    quiz) instead of the whole bank. Pass the game turn/day; it wraps around.
+    """
+    return CATEGORY_NAMES[day % len(CATEGORY_NAMES)]
 
 
 @dataclass
@@ -402,11 +421,31 @@ def _extract_json(raw: str) -> str:
     return s[start : end + 1]
 
 
-def parse_bank(raw: str, *, strict: bool = True) -> QuestionBank:
+def shuffle_item_options(item: MCQItem, rng: Optional[random.Random] = None) -> MCQItem:
+    """Randomize an item's option order and relabel them A, B, C ... in the new order.
+
+    LLMs tend to park the correct answer in a habitual slot (very often "B"); asking the
+    model to vary it is unreliable, so we enforce a uniform-random position here instead.
+    `correct_option_id` is updated to the correct option's new letter, so grading stays
+    correct. Mutates and returns the item. Pass a seeded random.Random for reproducibility.
+    """
+    r = rng or random
+    r.shuffle(item.options)
+    for i, opt in enumerate(item.options):
+        opt.id = VALID_OPTION_IDS[i]
+    correct = next((o for o in item.options if o.is_correct), None)
+    if correct is not None:
+        item.correct_option_id = correct.id
+    return item
+
+
+def parse_bank(raw: str, *, strict: bool = True, randomize_options: bool = True) -> QuestionBank:
     """Parse a model response into a validated QuestionBank.
 
-    strict=True  -> raise ValueError if any item fails validation.
-    strict=False -> keep going, stash problems in bank.self_check['_local_validation_errors'].
+    strict=True            -> raise ValueError if any item fails validation.
+    strict=False           -> keep going, stash problems in self_check['_local_validation_errors'].
+    randomize_options=True -> shuffle every item's options so the correct answer's position
+                              is uniformly random (defeats the model's "always B" tendency).
     """
     data = json.loads(_extract_json(raw))
     items: list[MCQItem] = []
@@ -437,6 +476,9 @@ def parse_bank(raw: str, *, strict: bool = True) -> QuestionBank:
                 learning_objective=d.get("learning_objective", ""),
             )
         )
+    if randomize_options:
+        for item in items:
+            shuffle_item_options(item)
     bank = QuestionBank(
         items=items,
         bank_metadata=data.get("bank_metadata", {}),
