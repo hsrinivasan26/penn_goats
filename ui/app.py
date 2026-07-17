@@ -239,6 +239,7 @@ def _actions(s):
 
 def screen_play():
     s = ss.state
+    quiz.prefetch(s.turn)          # warm this day's quiz bank in the background (no stall later)
     st.markdown(f"<div class='apphead'>🐐 <b>Penn Goats</b> &nbsp;·&nbsp; Month {s.turn} of {config.TURN_LIMIT} "
                 f"&nbsp;·&nbsp; goal {render.money(s.target)}</div>", unsafe_allow_html=True)
     left, right = st.columns([3, 1], gap="large")
@@ -374,7 +375,7 @@ def screen_results():
 def _start_quiz():
     day = ss.get("quiz_day", 0)
     with st.spinner("Putting together today's questions…"):
-        topic, bank, used_ai = quiz.build_daily_quiz(day, n=5, seed=random.randint(0, 10**6))
+        topic, bank, used_ai = quiz.build_daily_quiz(day, seed=random.randint(0, 10**6))
     ss.quiz = mcq.Quiz(bank)
     ss.quiz_topic, ss.quiz_ai = topic, used_ai
     ss.quiz_phase, ss.quiz_feedback = "answer", None
@@ -385,10 +386,11 @@ def screen_quiz():
 
     # start view
     if q is None:
-        topic = mcq.topic_for_day(ss.get("quiz_day", 0))
+        day = ss.get("quiz_day", 0)
+        topic = quiz.prefetch(day)      # start warming the bank while the player reads
         st.markdown("<h2 style='margin-bottom:2px'>Money quiz</h2>"
                     f"<p style='color:#9aa0ac;font-size:13.5px'>Today's topic: "
-                    f"<b style='color:#e8e8ea'>{topic.title()}</b> — 5 questions, easy to hard. "
+                    f"<b style='color:#e8e8ea'>{topic.title()}</b> — 8–10 questions, easy to hard. "
                     "Pass mark is 65%.</p>", unsafe_allow_html=True)
         c = st.columns([1, 1, 3])
         if c[0].button("Start quiz", type="primary"):

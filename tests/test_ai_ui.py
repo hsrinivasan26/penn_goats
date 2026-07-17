@@ -69,16 +69,6 @@ def test_coach_prompt_is_grounded_in_real_figures():
 
 # ---- daily quiz ------------------------------------------------------------
 
-def test_quiz_falls_back_without_key(monkeypatch):
-    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
-    topic, bank, used_ai = quiz.build_daily_quiz(day=1, n=5, seed=0)
-    assert used_ai is False
-    assert 1 <= len(bank.items) <= 5
-    order = [DIFFICULTY_ORDER.get(i.difficulty.lower(), 99) for i in bank.items]
-    assert order == sorted(order)                       # easy -> hard ramp
-    assert bank.validate() == []                        # fallback bank is itself valid
-
-
 _FAKE = {
     "items": [
         {"id": "T-a-1", "stem": "q1", "difficulty": "easy",
@@ -98,14 +88,43 @@ _FAKE = {
 }
 
 
-def test_quiz_uses_generator_when_supplied():
-    topic, bank, used_ai = quiz.build_daily_quiz(
-        day=0, n=5, generator=lambda p: json.dumps(_FAKE))
-    assert used_ai is True
-    assert len(bank.items) == 2
+def test_quiz_falls_back_when_not_prefetched(monkeypatch):
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    quiz.clear_cache()
+    topic, bank, used_ai = quiz.build_daily_quiz(day=1, seed=0)
+    assert used_ai is False
+    assert 8 <= len(bank.items) <= 10                   # random 8-10 from the fallback bank
+    order = [DIFFICULTY_ORDER.get(i.difficulty.lower(), 99) for i in bank.items]
+    assert order == sorted(order)                       # easy -> hard ramp
     assert bank.validate() == []
 
 
+def test_quiz_length_is_random_8_to_10(monkeypatch):
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    quiz.clear_cache()
+    lengths = {len(quiz.build_daily_quiz(day=5, seed=s)[1].items) for s in range(25)}
+    assert lengths and all(8 <= L <= 10 for L in lengths)
+
+
+def test_quiz_uses_prefetched_ai_bank():
+    quiz.clear_cache()
+    topic = topic_for_day(0)
+    quiz._prime(topic, generator=lambda p: json.dumps(_FAKE))   # synchronous prime into cache
+    assert quiz.is_ready(0)
+    _, bank, used_ai = quiz.build_daily_quiz(day=0, seed=0)
+    assert used_ai is True and bank.validate() == []
+
+
+def test_prefetch_marks_topic_ready_then_clears():
+    quiz.clear_cache()
+    assert not quiz.is_ready(0)
+    quiz._prime(topic_for_day(0), generator=lambda p: json.dumps(_FAKE))
+    assert quiz.is_ready(0)
+    quiz.clear_cache()
+    assert not quiz.is_ready(0)
+
+
 def test_quiz_topic_matches_the_day():
+    quiz.clear_cache()
     topic, _, _ = quiz.build_daily_quiz(day=3, seed=0)
     assert topic == topic_for_day(3)
