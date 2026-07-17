@@ -83,7 +83,8 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:-.02em}
 
 /* title screen */
 .title-wrap{text-align:center;padding:46px 20px 30px}
-.title-logo{width:118px;height:118px;filter:drop-shadow(0 10px 34px rgba(242,197,61,.35))}
+.title-mark{width:104px;height:auto;vertical-align:middle;filter:drop-shadow(0 10px 30px rgba(242,197,61,.30))}
+.title-word{height:56px;width:auto;vertical-align:middle;margin-left:6px;filter:drop-shadow(0 3px 12px rgba(242,197,61,.20))}
 .title-brand{font-family:var(--disp);font-weight:700;font-size:44px;letter-spacing:-.03em;margin-top:6px}
 .title-brand .p{color:var(--purple)}
 .title-hook{font-family:var(--disp);font-size:16px;margin-top:8px}

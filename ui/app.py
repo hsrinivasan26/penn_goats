@@ -32,7 +32,11 @@ import titles
 import coach
 import quiz
 
-st.set_page_config(page_title="Chryseos", layout="wide")
+from PIL import Image as _Image
+st.set_page_config(
+    page_title="Chryseos",
+    page_icon=_Image.open(os.path.join(os.path.dirname(__file__), "static", "logo-mark.png")),
+    layout="wide")
 style.inject_css()
 
 ss = st.session_state
@@ -67,8 +71,8 @@ def start_game(path):
 def screen_title():
     st.markdown(
         "<div class='title-wrap'>"
-        "<img class='title-logo' src='app/static/logo.svg' alt='Chryseos'/>"
-        "<div class='title-brand'>Chryseos</div>"
+        "<img class='title-mark' src='app/static/logo-mark.png' alt='Chryseos'/>"
+        "<img class='title-word' src='app/static/logo-wordmark.png' alt='Chryseos'/>"
         "<div class='title-hook'>From broke new hire to Budget GOAT.</div>"
         "<div class='title-tag'>A money game about your first real paychecks.</div>"
         "</div>", unsafe_allow_html=True)
