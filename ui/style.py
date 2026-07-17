@@ -74,6 +74,13 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:-.02em}
 .shortfall{background:#241416;border:1px solid #5a2b2b;border-radius:12px;padding:11px 14px;margin-bottom:10px;color:#f3b0b0;font-size:13px}
 .taxline{color:var(--muted);font-size:12.5px;margin-bottom:10px}
 
+/* milestone reached (achievement) */
+.milestone{display:flex;align-items:center;gap:14px;margin-bottom:10px;padding:12px 15px;border-radius:13px;
+  background:linear-gradient(180deg,#251f10,#1a160c);border:1px solid #5a4a1a}
+.milestone .mlab{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:#f5b642}
+.milestone .mtitle{font-family:var(--disp);font-weight:600;font-size:15px;color:#fce8b8;margin-top:3px}
+.milestone .mbonus{margin-left:auto;font-family:var(--disp);font-weight:700;font-size:15px;color:#f5b642;white-space:nowrap}
+
 /* title screen */
 .title-wrap{text-align:center;padding:46px 20px 30px}
 .title-goat{font-size:76px;filter:drop-shadow(0 8px 30px rgba(139,109,255,.5))}

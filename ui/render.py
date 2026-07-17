@@ -106,6 +106,16 @@ def paystub_html(stub) -> str:
       </div></div>'''
 
 
+# --- milestone reached (achievement banner) ---
+
+def milestone_html(m) -> str:
+    if not m:
+        return ""
+    return (f'<div class="milestone"><div><span class="mlab">★ Milestone reached</span>'
+            f'<div class="mtitle">{m["label"]}</div></div>'
+            f'<div class="mbonus">+{m["bonus"]} happiness</div></div>')
+
+
 # --- this-month events ---
 
 def event_html(payload) -> str:

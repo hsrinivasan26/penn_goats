@@ -128,3 +128,15 @@ def test_quiz_topic_matches_the_day():
     quiz.clear_cache()
     topic, _, _ = quiz.build_daily_quiz(day=3, seed=0)
     assert topic == topic_for_day(3)
+
+
+# ---- housing / Homeowner title (buy_house is now wired in the UI) -----------
+
+def test_buying_a_house_earns_the_homeowner_title():
+    import titles
+    from game import choices
+    s = new_game("A", seed=1)
+    s.cash = 60_000
+    assert choices.buy_house(s, price=200_000, down=20_000) is True
+    assert s.housing.value == "own"
+    assert "homeowner" in titles.earned_ids(s)      # previously unreachable

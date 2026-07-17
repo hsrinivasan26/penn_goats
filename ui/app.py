@@ -24,7 +24,7 @@ except Exception:
 import config
 from game.state import new_game
 from game.rng import SeededRNG
-from game.formulas import leisure_happiness
+from game.formulas import leisure_happiness, amortize
 from game import choices
 from game import mcq
 
@@ -60,6 +60,7 @@ def start_game(path):
     ss.state = new_game(path, seed=seed)
     ss.rng = SeededRNG(seed)
     ss.month = turn.begin_month(ss.state, ss.rng)
+    ss.last_milestone = None
     go("play")
 
 
@@ -209,12 +210,29 @@ def dlg_jobmoves():
     if st.button("Take this job", key="dj_btn", use_container_width=True):
         choices.change_job(s, int(g)); st.rerun()
     st.divider()
+    st.markdown("**Buy a house** — trade rent for a mortgage and start building equity.")
+    cash = int(s.cash)
+    if s.housing == "own":
+        st.caption("You already own your home.")
+    else:
+        price = st.number_input("Home price ($)", 80_000, 400_000, 200_000, 10_000, key="dj_price")
+        down = st.number_input("Down payment ($)", 0, cash, min(cash, 20_000), 1_000, key="dj_down")
+        loan = max(0, int(price) - int(down))
+        pay = amortize(loan, config.APR["mortgage"] / 12, config.MORTGAGE_TERM_MONTHS)
+        st.caption(f"Loan {render.money(loan)} at {config.APR['mortgage'] * 100:.1f}% → about "
+                   f"{render.money(pay)}/mo (you pay {render.money(s.rent)} rent now).")
+        ok = 0 <= int(down) <= cash and int(price) >= int(down)
+        if st.button("Buy this house", key="dj_house_btn", disabled=not ok, use_container_width=True):
+            choices.buy_house(s, int(price), int(down)); st.rerun()
+
+    st.divider()
     st.markdown("**Buy a car** — cash for now (financing comes later).")
-    if int(s.cash) <= 0:
-        st.caption("No cash for a car right now."); return
-    car = _amount_slider("Spend on a car ($)", s.cash, min(int(s.cash), 2000), "dj_car")
-    if st.button("Buy car", key="dj_car_btn", disabled=car <= 0, use_container_width=True):
-        choices.buy_car(s, int(car)); st.rerun()
+    if cash <= 0:
+        st.caption("No cash for a car right now.")
+    else:
+        car = _amount_slider("Spend on a car ($)", s.cash, min(cash, 2000), "dj_car")
+        if st.button("Buy car", key="dj_car_btn", disabled=car <= 0, use_container_width=True):
+            choices.buy_car(s, int(car)); st.rerun()
 
 
 _ACTIONS = [
@@ -250,10 +268,14 @@ def screen_play():
         events = render.event_html(ss.month)
         if events:
             st.markdown(events, unsafe_allow_html=True)
+        milestone = render.milestone_html(ss.get("last_milestone"))
+        if milestone:
+            st.markdown(milestone, unsafe_allow_html=True)
         _actions(s)
         st.write("")
         if st.button("End the month ▶", type="primary"):
             turn.end_month(s)
+            ss.last_milestone = s._milestone      # capture before begin_month clears it
             if s.game_over is not None:
                 go("results")
             else:
