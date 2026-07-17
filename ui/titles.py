@@ -85,10 +85,3 @@ def earned_ids(state) -> set:
         except Exception:
             pass
     return out
-
-
-def by_id(tid):
-    for t in TITLES:
-        if t["id"] == tid:
-            return t
-    return None

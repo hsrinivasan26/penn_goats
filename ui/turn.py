@@ -8,7 +8,6 @@ KEEP IN SYNC with game.engine.run_turn -- same phase order, same bookkeeping. (W
 engine settles, this could become an official interactive API in the engine itself.)
 """
 
-import config
 from game.paystub import phase_income
 from game.economy import phase_markets, phase_interest
 from game.outflows import phase_forced_outflows
