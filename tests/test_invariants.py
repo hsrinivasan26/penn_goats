@@ -1,5 +1,6 @@
 """The spec invariants must hold after every turn, across many seeded games."""
 
+import config
 from game.state import new_game
 from game.rng import SeededRNG
 from game.enums import GameOver
@@ -54,6 +55,15 @@ def test_path_b_survives_turn_1():
     assert s.game_over is None                  # not bankrupt...
     assert s.net_worth() < 0                     # ...even though net worth is deep in student debt
     assert s.turn == 2
+
+
+def test_win_fires_the_moment_the_goal_is_reached():
+    """Reaching the net-worth goal wins immediately -- not only at the final month."""
+    s = new_game("A", seed=1)
+    s.cash = s.target + 50_000                   # already well past the goal
+    run_turn(s, SeededRNG(1))
+    assert s.game_over == GameOver.WIN
+    assert s.turn < config.TURN_LIMIT            # won long before month 60
 
 
 def test_bankruptcy_comes_from_a_shortfall_streak():

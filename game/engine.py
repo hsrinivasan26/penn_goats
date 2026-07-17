@@ -20,15 +20,17 @@ except (OSError, ValueError):
 
 
 def phase_checks(state) -> None:
-    """Phase 8: bankruptcy after a shortfall streak; win/timeout (by net worth) at the final turn.
+    """Phase 8: bankruptcy after a shortfall streak; win the moment net worth reaches the goal; timeout at the final month.
 
     Note: negative net worth is NOT a loss -- starting adulthood with student debt is normal.
     You lose by failing to cover essentials repeatedly (below), or by burning out (Phase 7).
     """
     if state.consecutive_shortfalls >= config.BANKRUPTCY_SHORTFALL_STREAK:
         state.game_over = GameOver.BANKRUPTCY
+    elif state.net_worth() >= state.target:
+        state.game_over = GameOver.WIN
     elif state.turn == config.TURN_LIMIT:
-        state.game_over = GameOver.WIN if state.net_worth() >= state.target else GameOver.TIMEOUT
+        state.game_over = GameOver.TIMEOUT
 
 
 def _condition_met(state, when: dict) -> bool:

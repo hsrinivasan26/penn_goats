@@ -81,6 +81,20 @@ class GameState:
                 total += liab["principal"]
         return total
 
+    def weighted_debt(self) -> float:
+        """Debt weighted by how heavily each kind bears on stress (config.STRESS_WEIGHT).
+
+        Feeds ONLY the Phase 7 stress check (and, later, the UI debt-ring alarm). It is not a
+        dollar figure shown to the player and never triggers a loss on its own.
+        """
+        weights = config.STRESS_WEIGHT
+        total = self.tax_owed * weights.get("tax", 1.0)
+        for slot in DEBT_SLOTS:
+            liab = self.liabilities[slot]
+            if liab is not None:
+                total += liab["principal"] * weights.get(liab["kind"], 1.0)
+        return total
+
     def net_worth(self) -> int:
         return self.cash + self.investments_total() - self.liabilities_total()
 
