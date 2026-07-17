@@ -124,6 +124,40 @@ def test_prefetch_marks_topic_ready_then_clears():
     assert not quiz.is_ready(0)
 
 
+def test_prime_drops_a_malformed_item_but_keeps_the_good_bank():
+    # a bank where one item is invalid (two options flagged correct) alongside good ones:
+    # the bad item must be dropped, not the whole bank thrown away.
+    bad = json.loads(json.dumps(_FAKE))
+    bad["items"].append({
+        "id": "T-bad-1", "stem": "malformed", "difficulty": "easy",
+        "options": [{"id": "A", "text": "x", "is_correct": True},
+                    {"id": "B", "text": "y", "is_correct": True},   # two correct -> invalid
+                    {"id": "C", "text": "z", "is_correct": False},
+                    {"id": "D", "text": "w", "is_correct": False}],
+        "correct_option_id": "A"})
+    quiz.clear_cache()
+    quiz._prime(topic_for_day(0), generator=lambda p: json.dumps(bad))
+    assert quiz.is_ready(0)
+    with quiz._LOCK:
+        stored = quiz._BANKS[topic_for_day(0)]
+    assert len(stored.items) == len(_FAKE["items"])          # exactly the good ones kept
+    assert "T-bad-1" not in {i.id for i in stored.items}
+    assert stored.validate() == [] or all(not i.validate() for i in stored.items)
+
+
+def test_prime_with_only_invalid_items_falls_back():
+    only_bad = {"items": [{
+        "id": "T-bad-2", "stem": "malformed", "difficulty": "easy",
+        "options": [{"id": "A", "text": "x", "is_correct": False},   # zero correct -> invalid
+                    {"id": "B", "text": "y", "is_correct": False},
+                    {"id": "C", "text": "z", "is_correct": False},
+                    {"id": "D", "text": "w", "is_correct": False}],
+        "correct_option_id": "A"}]}
+    quiz.clear_cache()
+    quiz._prime(topic_for_day(0), generator=lambda p: json.dumps(only_bad))
+    assert not quiz.is_ready(0)                              # nothing valid -> caller falls back
+
+
 def test_quiz_topic_matches_the_day():
     quiz.clear_cache()
     topic, _, _ = quiz.build_daily_quiz(day=3, seed=0)

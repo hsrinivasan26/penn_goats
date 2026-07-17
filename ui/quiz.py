@@ -122,14 +122,23 @@ _INFLIGHT: set = set()     # topics currently generating
 
 def _prime(topic: str, generator=None) -> None:
     """Generate a topic's bank and store it in the cache. Runs on a background thread in
-    production; called directly in tests. Never raises."""
+    production; called directly in tests. Never raises.
+
+    Parses with strict=False and drops only the individual items that fail validation, so
+    one malformed question can't discard an otherwise-good bank (which would waste the
+    generation and fall back to the generic bank). The bank is stored only if at least one
+    valid item survives; otherwise None -> callers fall back."""
     bank = None
     try:
         gen = generator
         if gen is None and os.getenv("GEMINI_API_KEY"):
             gen = make_gemini_generator()
         if gen is not None:
-            bank = generate_bank(gen, scope=topic, questions_per_subtopic=_qps_for(topic))
+            raw = generate_bank(gen, scope=topic,
+                                questions_per_subtopic=_qps_for(topic), strict=False)
+            good = [it for it in raw.items if not it.validate()]
+            if good:
+                bank = QuestionBank(good, raw.bank_metadata, {}, raw.self_check)
     except Exception:
         bank = None
     with _LOCK:
