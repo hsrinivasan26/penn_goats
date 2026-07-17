@@ -1,4 +1,4 @@
-# Dark theme for the Penn Goats UI. Purple primary nods to the purple-goat mascot.
+# Dark theme for the Chryseos UI. Purple is the primary accent.
 [theme]
 base = "dark"
 primaryColor = "#8b6dff"

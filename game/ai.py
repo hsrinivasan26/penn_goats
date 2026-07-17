@@ -24,7 +24,7 @@ CATEGORIES = {
     "RISK": "RISK & LIFE EVENTS",
 }
 
-parser = argparse.ArgumentParser(description="PENN GOATS financial-literacy quiz.")
+parser = argparse.ArgumentParser(description="Chryseos financial-literacy quiz.")
 parser.add_argument(
     "-c", "--category", default="ALL",
     help="Topic to quiz on: " + ", ".join(CATEGORIES) + ", or ALL for every category. "

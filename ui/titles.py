@@ -22,7 +22,7 @@ def _student_cleared(s):
 
 
 TITLES = [
-    {"id": "budget_goat", "name": "Budget GOAT", "icon": "🐐", "kind": "win",
+    {"id": "budget_goat", "name": "Budget GOAT", "icon": "🏆", "kind": "win",
      "blurb": "Reached your net-worth goal.",
      "rule": lambda s: _outcome(s) == "win"},
     {"id": "dug_out", "name": "Dug Out", "icon": "⛏️", "kind": "style",
