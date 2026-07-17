@@ -83,7 +83,7 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:-.02em}
 
 /* title screen */
 .title-wrap{text-align:center;padding:46px 20px 30px}
-.title-goat{font-size:76px;filter:drop-shadow(0 8px 30px rgba(139,109,255,.5))}
+.title-logo{width:118px;height:118px;filter:drop-shadow(0 10px 34px rgba(242,197,61,.35))}
 .title-brand{font-family:var(--disp);font-weight:700;font-size:44px;letter-spacing:-.03em;margin-top:6px}
 .title-brand .p{color:var(--purple)}
 .title-hook{font-family:var(--disp);font-size:16px;margin-top:8px}

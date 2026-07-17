@@ -1,4 +1,4 @@
-"""Penn Goats -- Streamlit UI over the pure-Python engine.
+"""Chryseos -- Streamlit UI over the pure-Python engine.
 
 Screen routing lives in st.session_state; ALL game logic lives in game/ -- this file only
 renders state and collects the player's moves.
@@ -32,7 +32,7 @@ import titles
 import coach
 import quiz
 
-st.set_page_config(page_title="Penn Goats", page_icon="🐐", layout="wide")
+st.set_page_config(page_title="Chryseos", layout="wide")
 style.inject_css()
 
 ss = st.session_state
@@ -67,8 +67,8 @@ def start_game(path):
 def screen_title():
     st.markdown(
         "<div class='title-wrap'>"
-        "<div class='title-goat'>🐐</div>"
-        "<div class='title-brand'>Penn <span class='p'>Goats</span></div>"
+        "<img class='title-logo' src='app/static/logo.svg' alt='Chryseos'/>"
+        "<div class='title-brand'>Chryseos</div>"
         "<div class='title-hook'>From broke new hire to Budget GOAT.</div>"
         "<div class='title-tag'>A money game about your first real paychecks.</div>"
         "</div>", unsafe_allow_html=True)
@@ -253,7 +253,7 @@ def _actions(s):
 def screen_play():
     s = ss.state
     quiz.prefetch(s.turn)          # warm this day's quiz bank in the background (no stall)
-    st.markdown(f"<div class='apphead'>🐐 <b>Penn Goats</b> &nbsp;·&nbsp; Month {s.turn} of {config.TURN_LIMIT} "
+    st.markdown(f"<div class='apphead'><b>Chryseos</b> &nbsp;·&nbsp; Month {s.turn} of {config.TURN_LIMIT} "
                 f"&nbsp;·&nbsp; goal {render.money(s.target)}</div>", unsafe_allow_html=True)
     left, right = st.columns([3, 1], gap="large")
     with right:
@@ -339,7 +339,7 @@ def screen_results():
     earned_now = titles.earned_ids(s)
     ss.earned_titles |= earned_now
     look = {
-        "win":        ("#34d399", "🐐 You did it", "Budget <span class='p'>GOAT</span>"),
+        "win":        ("#34d399", "You did it", "Budget <span class='p'>GOAT</span>"),
         "bankruptcy": ("#ef4444", "Bankrupt", "In Over Your Head"),
         "burnout":    ("#fb7185", "Burned out", "Ran on Empty"),
         "timeout":    ("#f5b642", "Time's up", "Treading Water"),
@@ -371,7 +371,7 @@ def screen_results():
             ss.coach_text, ss.coach_is_ai = coach.overview(s, outcome)
         ss.coach_for = id(s)
     ct = "Your coach · AI" if ss.coach_is_ai else "Your coach"
-    st.markdown(f"<div class='coach'><div class='face'>🐐</div><div><div class='ct'>{ct}</div>"
+    st.markdown(f"<div class='coach'><div><div class='ct'>{ct}</div>"
                 f"<p>{ss.coach_text}</p></div></div>", unsafe_allow_html=True)
 
     if earned_now:

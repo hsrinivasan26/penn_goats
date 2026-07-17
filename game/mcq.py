@@ -1,6 +1,6 @@
 """
 mcq_engine.py
-PENN GOATS - financial-literacy multiple-choice quiz engine.
+Chryseos - financial-literacy multiple-choice quiz engine.
 
 WHAT THIS DOES (in order):
   1. Holds the MCQ-generation prompt as a plain string (MCQ_GENERATION_PROMPT).
@@ -652,7 +652,7 @@ def run_cli_quiz(bank: QuestionBank, gate_percent: float = 65.0) -> dict:
     Questions are presented easy -> medium -> hard.
     """
     quiz = Quiz(bank, sort_by_difficulty=True)
-    print(f"\n=== PENN GOATS money quiz - {quiz.total} questions ===\n")
+    print(f"\n=== Chryseos money quiz - {quiz.total} questions ===\n")
     while not quiz.finished:
         p = quiz.current_prompt()
         assert p is not None

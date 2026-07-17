@@ -1,4 +1,4 @@
-"""Terminal game loop for Penn Goats (playable w/o UI)
+"""Terminal game loop for Chryseos (playable w/o UI)
 
     python play.py                    # interactive, Path A, seed 0
     python play.py --path B --seed 7  # interactive, Path B
@@ -162,7 +162,7 @@ def auto_strategy(state):
 def play_interactive(path, seed):
     state = new_game(path, seed=seed)
     rng = SeededRNG(seed)
-    print(f"Penn Goats -- Path {path}, seed {seed}. Survive to the buffer. Ctrl-C to quit.")
+    print(f"Chryseos -- Path {path}, seed {seed}. Survive to the buffer. Ctrl-C to quit.")
     while not state.game_over:
         before = state.happiness
         run_turn(state, rng, choose_actions=interactive_actions)
@@ -192,7 +192,7 @@ def play_auto(path, seed, turns):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Play the Penn Goats engine in the terminal.")
+    ap = argparse.ArgumentParser(description="Play the Chryseos engine in the terminal.")
     ap.add_argument("--path", choices=["A", "B"], default="A")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--auto", type=int, metavar="TURNS",
