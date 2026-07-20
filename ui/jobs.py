@@ -18,6 +18,16 @@ TIER_NAMES = {0: "Entry", 1: "Skilled", 2: "Professional"}
 # months of work that add +1 / +2 tiers on top of the education floor
 EXP_FOR_TIER = {1: 12, 2: 30}
 
+# Passing the monthly money quiz earns "study credit": extra months of career experience.
+# Capped so the quiz accelerates a career (financial literacy pays) but can never replace
+# actually working -- deliberately neither harsh nor free.
+QUIZ_CREDIT_CAP = 6
+
+
+def total_experience(months_worked: int, quiz_credit: int = 0) -> int:
+    """Effective experience: months on the job plus capped study credit from quizzes."""
+    return months_worked + min(max(0, quiz_credit), QUIZ_CREDIT_CAP)
+
 # The catalog. Salaries are monthly gross. Kept deliberately spread so upgrading matters.
 JOBS = [
     {"title": "Retail associate",       "gross": 2400, "tier": 0},

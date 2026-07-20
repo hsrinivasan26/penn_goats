@@ -172,6 +172,8 @@ def event_html(payload) -> str:
     if not payload:
         return ""
     bill, event, tax = payload["bill"], payload["event"], payload["tax"]
+    if event and event.get("key") == "quiet":
+        event = None                      # a calm month needs no banner
     parts = []
     if bill and bill.get("shortfall"):
         parts.append(f'<div class="shortfall">&#9888; Short by {money(bill["gap"])} on essentials '

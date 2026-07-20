@@ -58,3 +58,20 @@ def test_start_titles_exist_in_catalog():
     titles = {j["title"] for j in jobs.JOBS}
     assert jobs.START_TITLE["A"] in titles
     assert jobs.START_TITLE["B"] in titles
+
+
+def test_quiz_study_credit_adds_and_caps():
+    assert jobs.total_experience(10, 0) == 10
+    assert jobs.total_experience(10, 3) == 13
+    assert jobs.total_experience(10, 99) == 10 + jobs.QUIZ_CREDIT_CAP   # capped
+    assert jobs.total_experience(10, -5) == 10                          # never negative
+    # credit can genuinely pull an unlock earlier: 6 worked + 6 credit == the 12-month gate
+    assert jobs.available_tier("A", jobs.total_experience(6, 6)) == 1
+
+
+def test_quiet_month_renders_no_event_banner():
+    import render
+    payload = {"bill": {"shortfall": False}, "tax": None,
+               "event": {"key": "quiet", "label": "quiet", "cash_delta": 0,
+                         "happiness_delta": 0, "gross_mult": None, "layoff": False}}
+    assert render.event_html(payload) == ""

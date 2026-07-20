@@ -50,11 +50,17 @@ def phase_annual_tax(state):
     return state._tax
 
 
-def phase_life_event(state, rng, forced: dict | None = None) -> dict:
-    """Roll and apply one life event. `forced={'key','amount'}` scripts it for tests."""
+def phase_life_event(state, rng, forced: dict | None = None) -> dict | None:
+    """Roll and apply one life event. `forced={'key','amount'}` scripts it for tests.
+
+    Turn 1 is a grace month: no random event fires, so a new game never opens by
+    slapping the player with a surprise bill. (Forced events still run, for tests.)
+    """
     if forced is not None:
         bucket, amount = _bucket_by_key(forced["key"]), forced.get("amount")
     else:
+        if state.turn <= 1:
+            return None
         bucket, amount = rng.roll_bucket(config.EVENTS), None
 
     key = bucket["key"]
