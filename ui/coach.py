@@ -32,11 +32,14 @@ def _facts(state, outcome: str) -> str:
     start_nw = hist[0]["net_worth"] if hist else state.net_worth()
     shortfalls = sum(1 for h in hist if h.get("shortfall"))
     reached = state.net_worth() >= state.target
+    import jobs                                            # sibling ui module (persona ages)
+    start_age = jobs.START_AGE.get(state.path, 18)
     return (
         f"outcome={outcome}; months_played={state.turn}; "
         f"starting_net_worth={start_nw}; final_net_worth={state.net_worth()}; "
         f"goal={state.target}; reached_goal={reached}; "
         f"final_happiness={state.happiness}/100; shortfall_months={shortfalls}; "
+        f"started_at_age={start_age}; age_now={start_age + (state.turn - 1) // 12}; "
         f"path={'graduate with a student loan' if state.path == 'B' else 'no degree, no debt'}"
     )
 

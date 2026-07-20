@@ -75,3 +75,11 @@ def test_quiet_month_renders_no_event_banner():
                "event": {"key": "quiet", "label": "quiet", "cash_delta": 0,
                          "happiness_delta": 0, "gross_mult": None, "layoff": False}}
     assert render.event_html(payload) == ""
+
+
+def test_ages_track_birthdays_and_goal():
+    assert jobs.age_at("A", 1) == 18 and jobs.age_at("B", 1) == 22
+    assert jobs.age_at("A", 12) == 18                 # still 18 through the first year
+    assert jobs.age_at("A", 13) == 19                 # birthday at the year mark
+    assert jobs.age_at("A", 60) == 22
+    assert jobs.goal_age("A") == 23 and jobs.goal_age("B") == 27

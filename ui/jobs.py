@@ -38,6 +38,20 @@ JOBS = [
 # The job each starting path begins in (its gross matches config.PATHS[path]["gross_month"]).
 START_TITLE = {"A": "Junior office admin", "B": "Licensed practical nurse"}
 
+# Persona ages: path A starts straight out of high school, path B fresh out of college.
+# The 60-month run means the goal must be reached by start age + 5.
+START_AGE = {"A": 18, "B": 22}
+
+
+def age_at(path: str, turn: int) -> int:
+    """The player's age during a given game month (birthdays fall at each 12-month mark)."""
+    return START_AGE[path] + (max(1, turn) - 1) // 12
+
+
+def goal_age(path: str, turn_limit: int = 60) -> int:
+    """The age by which the net-worth goal must be reached."""
+    return START_AGE[path] + turn_limit // 12
+
 
 def education_floor(path: str) -> int:
     """Tier a player qualifies for on day one, from their degree status."""

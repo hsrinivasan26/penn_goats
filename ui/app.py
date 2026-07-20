@@ -47,8 +47,10 @@ if "earned_titles" not in ss:
     ss.earned_titles = set()
 
 PATH_META = {
-    "A": {"name": "Starting from scratch", "desc": "No degree, no debt. Lower pay, but a clean slate."},
-    "B": {"name": "Fresh graduate", "desc": "A degree and a bigger paycheck — and a $30k loan to dig out of."},
+    "A": {"name": "Starting from scratch",
+          "desc": "18, straight out of high school. No degree, no debt — lower pay, but a clean slate."},
+    "B": {"name": "Fresh graduate",
+          "desc": "22, degree in hand and a bigger paycheck — plus a $30k loan to dig out of."},
 }
 
 
@@ -109,10 +111,12 @@ def screen_choose():
               <div class='pn'>{meta['name']}</div>
               <div class='pd'>{meta['desc']}</div>
               <div class='pstats'>
+                <div class='pstat'><div class='sl'>Starting age</div><div class='sv'>{jobs.START_AGE[key]}</div></div>
                 <div class='pstat'><div class='sl'>Pay / mo</div><div class='sv'>{render.money(cfg['gross_month'])}</div></div>
                 <div class='pstat'><div class='sl'>Debt</div><div class='sv'>{render.money(debt)}</div></div>
                 <div class='pstat'><div class='sl'>Cash</div><div class='sv'>{render.money(cfg['cash'])}</div></div>
-                <div class='pstat'><div class='sl'>Goal</div><div class='sv'>{render.money(cfg.get('target', config.TARGET))}</div></div>
+                <div class='pstat' style='grid-column:1 / -1'><div class='sl'>Goal</div>
+                  <div class='sv'>{render.money(cfg.get('target', config.TARGET))} by age {jobs.goal_age(key, config.TURN_LIMIT)}</div></div>
               </div></div>""", unsafe_allow_html=True)
             if st.button("Start this life", key=f"start_{key}", type="primary", use_container_width=True):
                 start_game(key); st.rerun()
@@ -295,7 +299,8 @@ def screen_play():
     s = ss.state
     quiz.prefetch(s.turn)          # warm this day's quiz bank in the background (no stall)
     st.markdown(f"<div class='apphead'><b>Chryseos</b> &nbsp;·&nbsp; Month {s.turn} of {config.TURN_LIMIT} "
-                f"&nbsp;·&nbsp; goal {render.money(s.target)}</div>", unsafe_allow_html=True)
+                f"&nbsp;·&nbsp; Age {jobs.age_at(s.path, s.turn)} &nbsp;·&nbsp; goal {render.money(s.target)} "
+                f"by age {jobs.goal_age(s.path, config.TURN_LIMIT)}</div>", unsafe_allow_html=True)
     left, right = st.columns([3, 1], gap="large")
     with right:
         st.markdown(render.rings_html(s), unsafe_allow_html=True)
@@ -402,8 +407,9 @@ def screen_results():
     st.markdown(
         f"<div class='rbanner'><span class='rbadge' style='color:{look[0]};"
         f"background:{look[0]}1a;border:1px solid {look[0]}55'>{look[1]}</span>"
-        f"<h2>{look[2]}</h2><div class='rs'>{render.money(s.net_worth())} net worth after "
-        f"{s.turn} months · goal {render.money(s.target)}</div></div>", unsafe_allow_html=True)
+        f"<h2>{look[2]}</h2><div class='rs'>{render.money(s.net_worth())} net worth at age "
+        f"{jobs.age_at(s.path, s.turn)}, after {s.turn} months · goal was {render.money(s.target)} "
+        f"by age {jobs.goal_age(s.path, config.TURN_LIMIT)}</div></div>", unsafe_allow_html=True)
 
     st.markdown(render.results_chart_html(s), unsafe_allow_html=True)
 
