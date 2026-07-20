@@ -11,7 +11,12 @@ def phase_markets(state, rng) -> dict:
     for cls in ASSET_CLASSES:
         balance = state.investments[cls]
         if balance > 0:
-            r = rng.draw_normal(config.RETURNS[cls]["mu"], config.RETURNS[cls]["sigma"])
+            spec = config.RETURNS[cls]
+            r = rng.draw_normal(spec["mu"], spec["sigma"])
+            crash_p = spec.get("crash_prob")
+            if crash_p and rng.draw_int(1, 10_000) <= round(crash_p * 10_000):
+                lo, hi = spec["crash_range"]            # fat left tail: a visible crash month
+                r = rng.draw_int(round(lo * 100), round(hi * 100)) / 100
             state.investments[cls] = apply_return(balance, r)
             applied[cls] = r
     return applied

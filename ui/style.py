@@ -171,6 +171,8 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:-.02em}
 .billrow .bout{color:#e6a2a2;font-variant-numeric:tabular-nums}
 .billsep{height:1px;background:var(--border);margin:7px 0}
 .billshort{margin-top:9px;color:#f3b0b0;font-size:12px;background:#241416;border:1px solid #5a2b2b;border-radius:10px;padding:8px 11px}
+.btax-good{color:var(--cash);font-weight:700}
+.btax-bad{color:#ef4444;font-weight:700}
 
 /* fluid motion */
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}

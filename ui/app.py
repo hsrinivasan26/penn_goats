@@ -22,6 +22,7 @@ import config
 from game.state import new_game
 from game.rng import SeededRNG
 from game.formulas import leisure_happiness, amortize, capital_gain, cap_gains_tax
+from game.enums import AssetClass, DebtKind
 from game import choices
 from game import mcq
 
@@ -133,7 +134,7 @@ def screen_choose():
 ASSET_DESC = {
     "index":    "≈ 0.7%/mo · steady",
     "growth":   "≈ 1.2%/mo · bigger swings",
-    "crypto":   "≈ 2%/mo · very high risk",
+    "crypto":   "≈ 1.2%/mo · wild swings, and it can crash hard",
     "riskfree": "≈ 0.3%/mo · never loses",
 }
 
@@ -231,7 +232,7 @@ def dlg_jobmoves():
         cur = ss.get("job_title") or jobs.title_for_gross(int(s.gross_month)) or "Current role"
         st.markdown(f"**Your job** — {cur} · {render.money(int(s.gross_month))}/mo "
                     f"&nbsp;·&nbsp; {exp} month{'s' if exp != 1 else ''} of experience")
-        st.caption("Experience comes from doing the work: pass the monthly money quiz to log a month.")
+        st.caption("Pass the monthly money quiz to log a month of experience.")
     else:
         st.markdown("**You're between jobs** — take a role below to start earning again.")
     offers = sorted(jobs.offerings(s.path, exp), key=lambda j: -j["gross"])
@@ -295,6 +296,58 @@ def _actions(s):
             dlg()
 
 
+_SELL_ORDER = [AssetClass.RISKFREE, AssetClass.INDEX, AssetClass.GROWTH, AssetClass.CRYPTO]
+
+
+def _sell_to_cover(s, amount):
+    """Sell investments (safest first) to raise `amount`, then pay it off the credit card.
+    Capital-gains tax on the sales accrues to year-end as usual."""
+    remaining = int(amount)
+    for cls in _SELL_ORDER:
+        if remaining <= 0:
+            break
+        bal = int(s.investments.get(cls, 0))
+        if bal > 0:
+            take = min(bal, remaining)
+            if choices.sell(s, take, cls):
+                remaining -= take
+    card = s.liabilities.get(DebtKind.CREDIT_CARD)
+    if card and card["principal"] > 0:
+        choices.pay_debt(s, min(int(s.cash), int(amount), int(card["principal"])),
+                         DebtKind.CREDIT_CARD)
+
+
+def _gap_choice(s):
+    """When a surprise cost outran cash, the player decides how to cover it: eat the 24%
+    card debt, or realize investments now (and owe capital gains in April)."""
+    ev = (ss.month or {}).get("event")
+    gap = int(ev.get("gap", 0)) if ev else 0
+    if gap <= 0 or ss.get("gap_offered_for") == s.turn:
+        return
+    card = s.liabilities.get(DebtKind.CREDIT_CARD)
+    sellable = sum(int(v) for k, v in s.investments.items()
+                   if k != AssetClass.HOME and int(v) > 0)
+    if not card or card["principal"] <= 0:
+        return
+    st.markdown(f"<div class='amsg'>That surprise outran your cash — <b>{render.money(gap)}</b> "
+                "landed on your credit card (24% APR). Cover it now, or carry the debt?</div>",
+                unsafe_allow_html=True)
+    g1, g2 = st.columns(2)
+    if sellable > 0:
+        if g1.button(f"Sell investments to cover {render.money(min(gap, sellable))}",
+                     use_container_width=True,
+                     help="Safest assets first. Profits taxed at year-end."):
+            _sell_to_cover(s, min(gap, sellable))
+            ss.gap_offered_for = s.turn
+            st.rerun()
+    else:
+        g1.caption("Nothing to sell — the debt stays this time. An emergency fund covers this.")
+    if g2.button("Keep it on the card", use_container_width=True,
+                 help="24% APR starts next month."):
+        ss.gap_offered_for = s.turn
+        st.rerun()
+
+
 def screen_play():
     s = ss.state
     quiz.prefetch(s.turn)          # warm this day's quiz bank in the background (no stall)
@@ -309,6 +362,7 @@ def screen_play():
         events = render.event_html(ss.month)
         if events:
             st.markdown(events, unsafe_allow_html=True)
+        _gap_choice(s)
         milestone = render.milestone_html(ss.get("last_milestone"))
         if milestone:
             st.markdown(milestone, unsafe_allow_html=True)
@@ -319,9 +373,8 @@ def screen_play():
         taken = ss.get("quiz_taken_for") == s.turn
         if bc[1].button("💼 Work done for this month" if taken else "💼 Do your job — money quiz",
                         disabled=taken, use_container_width=True,
-                        help="The quiz is your month's work. Pass it (65%) to log a month of "
-                             "experience toward your next role — skip or fail and your career "
-                             "stands still. One shot per month."):
+                        help="Your month's work. Pass (65%) to log a month of experience. "
+                             "One shot per month."):
             ss.quiz = None
             ss.quiz_home = "play"
             ss.quiz_day = s.turn                    # topic rotates with the month
@@ -475,8 +528,8 @@ def screen_quiz():
                     "Pass mark is 65%.</p>", unsafe_allow_html=True)
         ingame = ss.get("quiz_home") == "play"
         if ingame:
-            st.caption("This is your month's work. Pass (65%) and the month counts toward your "
-                       "next role — fail or walk away, and it doesn't. One shot per month.")
+            st.caption("Your month's work: pass (65%) and the month counts toward your next role. "
+                       "One shot per month.")
         c = st.columns([1, 1, 3])
         if c[0].button("Start quiz", type="primary"):
             _start_quiz(); st.rerun()
