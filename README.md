@@ -18,6 +18,7 @@ pip install -r ui/requirements.txt   # install the app's dependencies
 streamlit run ui/app.py              # launch the game
 ```
 
+
 Streamlit opens the game in your browser (usually at http://localhost:8501).
 That's it — click **Start** and play.
 
