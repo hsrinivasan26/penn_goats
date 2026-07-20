@@ -270,6 +270,7 @@ def screen_play():
         milestone = render.milestone_html(ss.get("last_milestone"))
         if milestone:
             st.markdown(milestone, unsafe_allow_html=True)
+        st.markdown(render.investments_chart_html(s), unsafe_allow_html=True)
         _actions(s)
         st.write("")
         if st.button("End the month ▶", type="primary"):

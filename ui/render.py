@@ -194,3 +194,87 @@ def results_chart_html(state) -> str:
       <text x="40" y="185" fill="#6b7280" font-size="10" font-family="Inter">Month {turns[0]}</text>
       <text x="500" y="185" text-anchor="end" fill="#6b7280" font-size="10" font-family="Inter">Month {turns[-1]}</text>
     </svg></div>'''
+
+
+# --- investments over time (one trend line per asset class) ---
+
+_ASSET_ORDER = ["riskfree", "index", "growth", "crypto", "home"]
+_ASSET_COLORS = {
+    "riskfree": "#34d399",   # green  - safe
+    "index":    "#38bdf8",   # blue   - steady
+    "growth":   "#f5b642",   # amber  - swingy
+    "crypto":   "#8b6dff",   # purple - wild
+    "home":     "#f472b6",   # pink   - property
+}
+_ASSET_LABELS = {
+    "riskfree": "Savings", "index": "Index", "growth": "Growth",
+    "crypto": "Crypto", "home": "Home",
+}
+
+
+def _asset_key(c) -> str:
+    """Asset-class keys may be AssetClass enum members or plain strings."""
+    return c.value if hasattr(c, "value") else str(c)
+
+
+def investments_chart_html(state) -> str:
+    """Each asset class as its own trend line over the months played, on one shared axis, so
+    you can compare how savings, index, growth, and crypto behave. Line colors match the
+    legend; classes you never held are omitted (home shows too if you own one)."""
+    hist = state.history or []
+    series = [(int(h["turn"]), h.get("investments_by_class") or {})
+              for h in hist if "investments_by_class" in h]
+    placeholder = ("<div class='chartwrap' style='text-align:center;color:#6b7280;font-size:13px;"
+                   "padding:26px'>Invest for a couple of months and your holdings will chart here.</div>")
+    if len(series) < 2:
+        return placeholder
+
+    held = [c for c in _ASSET_ORDER if any((byc.get(c, 0) or 0) > 0 for _, byc in series)]
+    raw_hi = max((byc.get(c, 0) or 0 for _, byc in series for c in held), default=0)
+    if not held or raw_hi <= 0:
+        return placeholder
+
+    turns = [t for t, _ in series]
+    n = len(series)
+    X0, X1, YT, YB = 44, 508, 20, 168
+    hi = raw_hi * 1.08
+    xs = [X0 + (X1 - X0) * i / (n - 1) for i in range(n)]
+
+    def yv(v):
+        return YB - (YB - YT) * (v / hi)
+
+    # one line per asset class the player has held
+    lines = []
+    for c in held:
+        col = _ASSET_COLORS[c]
+        vals = [float(byc.get(c, 0) or 0) for _, byc in series]
+        pts = " ".join(f"{xs[i]:.1f},{yv(vals[i]):.1f}" for i in range(n))
+        lines.append(
+            f'<polyline points="{pts}" fill="none" stroke="{col}" stroke-width="2.5" '
+            f'stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>'
+            f'<circle cx="{xs[-1]:.1f}" cy="{yv(vals[-1]):.1f}" r="3.5" fill="{col}"/>'
+        )
+
+    def cur_val(cls):
+        return next((int(v) for c, v in state.investments.items() if _asset_key(c) == cls), 0)
+
+    legend = "".join(
+        f"<span style='display:inline-flex;align-items:center;gap:5px'>"
+        f"<i style='width:9px;height:9px;border-radius:2px;background:{_ASSET_COLORS[c]};"
+        f"display:inline-block'></i>{_ASSET_LABELS[c]} {kmoney(cur_val(c))}</span>"
+        for c in held
+    )
+    legend_html = (f"<div style='display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;"
+                   f"font-size:11px;color:#9aa0ac'>{legend}</div>") if legend else ""
+
+    return f'''<div class="chartwrap">
+      <div style="color:#9aa0ac;font-size:12px;font-weight:600;margin:0 0 8px">Your investments over time</div>
+      <svg viewBox="0 0 528 176" role="img" aria-label="Each investment type as its own line over time">
+        <line x1="44" y1="{YB}" x2="508" y2="{YB}" stroke="#242a35"/>
+        {''.join(lines)}
+        <text x="40" y="{YT + 4}" text-anchor="end" fill="#6b7280" font-size="10" font-family="Inter">{kmoney(hi)}</text>
+        <text x="40" y="{YB}" text-anchor="end" fill="#6b7280" font-size="10" font-family="Inter">$0</text>
+        <text x="44" y="174" fill="#6b7280" font-size="10" font-family="Inter">Month {turns[0]}</text>
+        <text x="508" y="174" text-anchor="end" fill="#6b7280" font-size="10" font-family="Inter">Month {turns[-1]}</text>
+      </svg>{legend_html}
+    </div>'''

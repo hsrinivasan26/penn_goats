@@ -129,6 +129,11 @@ class GameState:
             "turn": self.turn,
             "cash": self.cash,
             "net_worth": self.net_worth(),
+            "investments": self.investments_total(),
+            "investments_by_class": {
+                (c.value if hasattr(c, "value") else str(c)): int(v)
+                for c, v in self.investments.items()
+            },
             "happiness": self.happiness,
             "employed": self.employed,
             "gross_month": self.gross_month,
