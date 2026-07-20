@@ -21,7 +21,7 @@ except Exception:
 import config
 from game.state import new_game
 from game.rng import SeededRNG
-from game.formulas import leisure_happiness, amortize
+from game.formulas import leisure_happiness, amortize, capital_gain, cap_gains_tax
 from game import choices
 from game import mcq
 
@@ -31,6 +31,7 @@ import turn
 import titles
 import coach
 import quiz
+import jobs
 
 from PIL import Image as _Image
 st.set_page_config(
@@ -61,6 +62,8 @@ def start_game(path):
     ss.rng = SeededRNG(seed)
     ss.month = turn.begin_month(ss.state, ss.rng)
     ss.last_milestone = None
+    ss.months_worked = 0
+    ss.job_title = jobs.START_TITLE.get(path)
     go("play")
 
 
@@ -148,6 +151,8 @@ def dlg_invest():
     cls = st.selectbox("Asset", list(ASSET_DESC), format_func=str.capitalize, key="di_cls")
     st.caption(ASSET_DESC[cls])
     amt = _amount_slider("Amount ($)", s.cash, min(200, int(s.cash)), "di_amt")
+    st.markdown(f"<div class='hpreview'>Cash left after "
+                f"<b>{render.money(int(s.cash) - int(amt))}</b></div>", unsafe_allow_html=True)
     st.caption("Gains are taxed only when you sell.")
     if st.button(f"Invest {render.money(amt)}", type="primary", disabled=amt <= 0, use_container_width=True):
         choices.invest(s, int(amt), cls); st.rerun()
@@ -163,6 +168,11 @@ def dlg_sell():
     cls = st.selectbox("Asset", list(held), format_func=lambda k: k.capitalize(), key="ds_cls")
     bal = int(held[cls])
     amt = _amount_slider("Amount ($)", bal, bal, "ds_amt")
+    gain, _basis = capital_gain(int(amt), int(s.cost_basis[cls]), bal)
+    st.markdown(f"<div class='hpreview'>Adds to cash now <b>{render.money(int(amt))}</b></div>",
+                unsafe_allow_html=True)
+    st.caption((f"~{render.money(cap_gains_tax(gain))} capital-gains tax at year-end · "
+                f"{render.money(bal - int(amt))} left invested.").replace("$", "\\$"))
     if st.button(f"Sell {render.money(amt)}", type="primary", disabled=amt <= 0, use_container_width=True):
         choices.sell(s, int(amt), cls); st.rerun()
 
@@ -176,6 +186,7 @@ def dlg_leisure():
     amt = _amount_slider("Spend on fun ($)", s.cash, min(40, int(s.cash)), "dl_amt")
     st.markdown(f"<div class='hpreview'>Happiness this month <b>+{leisure_happiness(int(amt))}</b></div>",
                 unsafe_allow_html=True)
+    st.caption(f"{render.money(int(s.cash) - int(amt))} cash left.")
     if st.button(f"Spend {render.money(amt)}", type="primary", disabled=amt <= 0, use_container_width=True):
         choices.leisure(s, int(amt)); st.rerun()
 
@@ -195,7 +206,11 @@ def dlg_paydebt():
     slot = labels[pick]
     cap = min(int(s.cash), int(debts[slot]["principal"]))
     amt = _amount_slider("Extra payment ($)", cap, min(200, cap), "dd_amt")
-    st.caption("Extra payments come straight off the principal.")
+    st.markdown(f"<div class='hpreview'>Balance after "
+                f"<b>{render.money(int(debts[slot]['principal']) - int(amt))}</b></div>",
+                unsafe_allow_html=True)
+    st.caption(f"Extra payments come straight off the principal · "
+               f"{render.money(int(s.cash) - int(amt))} cash left.")
     if st.button(f"Pay {render.money(amt)}", type="primary", disabled=amt <= 0, use_container_width=True):
         choices.pay_debt(s, int(amt), slot); st.rerun()
 
@@ -204,10 +219,28 @@ def dlg_paydebt():
 def dlg_jobmoves():
     s = ss.state
     _cash_line(s)
-    st.markdown("**Change jobs** — swap to a new salary, or recover from a layoff.")
-    g = st.number_input("New monthly gross ($)", 0, 20000, int(s.gross_month) or 3000, 100, key="dj_g")
-    if st.button("Take this job", key="dj_btn", use_container_width=True):
-        choices.change_job(s, int(g)); st.rerun()
+    exp = ss.get("months_worked", 0)
+    if s.employed:
+        cur = ss.get("job_title") or jobs.title_for_gross(int(s.gross_month)) or "Current role"
+        st.markdown(f"**Your job** — {cur} · {render.money(int(s.gross_month))}/mo "
+                    f"&nbsp;·&nbsp; {exp} months' experience")
+    else:
+        st.markdown("**You're between jobs** — take a role below to start earning again.")
+    offers = sorted(jobs.offerings(s.path, exp), key=lambda j: -j["gross"])
+    labels = {f"{j['title']} · {render.money(j['gross'])}/mo · {jobs.TIER_NAMES[j['tier']]}": j
+              for j in offers}
+    pick_label = st.selectbox("Open roles you qualify for", list(labels), key="dj_job")
+    pick = labels[pick_label]
+    same = s.employed and pick["gross"] == int(s.gross_month)
+    if st.button(f"Take this job — {render.money(pick['gross'])}/mo", key="dj_btn",
+                 disabled=same, use_container_width=True):
+        choices.change_job(s, int(pick["gross"]))
+        ss.job_title = pick["title"]
+        st.rerun()
+    nxt = jobs.next_unlock(s.path, exp)
+    if nxt:
+        name, rem = nxt
+        st.caption(f"🔒 {name} roles unlock after {rem} more month{'s' if rem != 1 else ''} of work.")
     st.divider()
     st.markdown("**Buy a house** — trade rent for a mortgage and start building equity.")
     cash = int(s.cash)
@@ -218,8 +251,8 @@ def dlg_jobmoves():
         down = st.number_input("Down payment ($)", 0, cash, min(cash, 20_000), 1_000, key="dj_down")
         loan = max(0, int(price) - int(down))
         pay = amortize(loan, config.APR["mortgage"] / 12, config.MORTGAGE_TERM_MONTHS)
-        st.caption(f"Loan {render.money(loan)} at {config.APR['mortgage'] * 100:.1f}% → about "
-                   f"{render.money(pay)}/mo (you pay {render.money(s.rent)} rent now).")
+        st.caption((f"Loan {render.money(loan)} at {config.APR['mortgage'] * 100:.1f}% → about "
+                    f"{render.money(pay)}/mo (you pay {render.money(s.rent)} rent now).").replace("$", "\\$"))
         ok = 0 <= int(down) <= cash and int(price) >= int(down)
         if st.button("Buy this house", key="dj_house_btn", disabled=not ok, use_container_width=True):
             choices.buy_house(s, int(price), int(down)); st.rerun()
@@ -270,9 +303,12 @@ def screen_play():
         milestone = render.milestone_html(ss.get("last_milestone"))
         if milestone:
             st.markdown(milestone, unsafe_allow_html=True)
+        st.markdown(render.bill_html(s, ss.month), unsafe_allow_html=True)
         _actions(s)
         st.write("")
         if st.button("End the month ▶", type="primary"):
+            if s.employed:
+                ss.months_worked = ss.get("months_worked", 0) + 1   # tenure unlocks better jobs
             turn.end_month(s)
             ss.last_milestone = s._milestone      # capture before begin_month clears it
             if s.game_over is not None:

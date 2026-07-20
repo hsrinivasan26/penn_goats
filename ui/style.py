@@ -12,8 +12,9 @@ _CSS = """
 }
 /* Streamlit chrome */
 [data-testid="stToolbar"],footer{display:none}
+[data-testid="stHeader"]{background:transparent;height:0}
 .stApp{background:radial-gradient(1000px 500px at 80% -10%,rgba(139,109,255,.10),transparent 60%),#0e1117}
-.block-container{padding-top:1.4rem;max-width:1180px}
+.block-container{padding-top:3rem;max-width:1180px}
 html,body,[class*="css"]{font-family:var(--body)}
 .stButton>button{border-radius:12px;font-family:var(--disp);font-weight:600;border:1px solid var(--border)}
 .stButton>button:hover{border-color:var(--purple)}
@@ -158,6 +159,29 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:-.02em}
 .coach .face{width:44px;height:44px;flex:none;border-radius:12px;display:grid;place-items:center;font-size:23px;background:radial-gradient(circle at 40% 30%,#3a3170,#241f45);border:1px solid #4a3f8a}
 .coach .ct{font-family:var(--disp);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--purple);font-weight:600}
 .coach p{margin:4px 0 0;font-size:13.5px;line-height:1.5}
+
+/* this month's bill (make "cash to work with" transparent) */
+.bill{background:var(--inset);border:1px solid var(--border);border-radius:14px;padding:2px 15px 12px;margin-bottom:12px}
+.bill .billcap{font-family:var(--disp);font-weight:600;font-size:12.5px;color:var(--muted);cursor:pointer;
+  list-style:none;display:flex;align-items:center;justify-content:space-between;padding:10px 0 8px}
+.bill summary::-webkit-details-marker{display:none}
+.bill .billtot{font-family:var(--disp);font-weight:700;font-size:14px;color:var(--cash)}
+.billrow{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);padding:3px 0}
+.billrow .bin{color:var(--cash);font-variant-numeric:tabular-nums}
+.billrow .bout{color:#e6a2a2;font-variant-numeric:tabular-nums}
+.billsep{height:1px;background:var(--border);margin:7px 0}
+.billshort{margin-top:9px;color:#f3b0b0;font-size:12px;background:#241416;border:1px solid #5a2b2b;border-radius:10px;padding:8px 11px}
+
+/* fluid motion */
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes popin{from{opacity:0;transform:translateY(6px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes ringdraw{from{stroke-dashoffset:176}}
+.pay,.event,.milestone,.bill,.chartwrap,.rstat,.pcard,.coach,.step,.ttile{animation:fadeUp .3s ease both}
+[role="dialog"]{animation:popin .18s ease both}
+.ring circle:last-child{animation:ringdraw .7s ease both}
+.stButton>button{transition:transform .14s ease,border-color .14s ease,background .14s ease}
+.stButton>button:hover{transform:translateY(-1px)}
+.stButton>button:active{transform:translateY(0)}
 </style>
 """
 

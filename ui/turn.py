@@ -20,6 +20,7 @@ def begin_month(state, rng):
     if state.game_over is not None:
         return None
     state.reset_scratch()
+    start_cash = state.cash                                      # carry-over, for the bill breakdown
     stub = phase_income(state)                                   # 1
     phase_markets(state, rng)                                    # 2
     phase_interest(state)                                        # 3
@@ -28,7 +29,7 @@ def begin_month(state, rng):
         state.consecutive_shortfalls + 1 if state.shortfall_flag else 0)
     tax = phase_annual_tax(state)                                # 5a
     event = phase_life_event(state, rng)                         # 5b
-    return {"stub": stub, "bill": bill, "tax": tax, "event": event}
+    return {"stub": stub, "bill": bill, "tax": tax, "event": event, "start_cash": start_cash}
 
 
 def end_month(state):

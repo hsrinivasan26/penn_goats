@@ -103,6 +103,59 @@ def paystub_html(stub) -> str:
       </div></div>'''
 
 
+# --- this month's bill (make "cash to work with" transparent) ---
+
+def bill_html(state, month) -> str:
+    """A plain statement showing exactly how this month's cash was reached:
+    carry-over + take-home + cash events, minus the essentials, debt minimums, and taxes."""
+    if not month:
+        return ""
+    stub = month.get("stub") or {}
+    bill = month.get("bill") or {}
+    event = month.get("event")
+    tax = month.get("tax")
+    net = int(stub.get("net", 0))
+    ev_cash = int(event["cash_delta"]) if event else 0
+
+    money_in = [("Cash carried over", int(month.get("start_cash", 0)))]
+    if net:
+        money_in.append(("Take-home pay", net))
+    if ev_cash > 0:
+        money_in.append((event["label"], ev_cash))
+
+    housing_label = "Mortgage" if state.housing == "own" else "Rent"
+    money_out = [(housing_label, int(bill.get("housing", 0))),
+                 ("Food", int(state.food)),
+                 ("Transport", int(state.transport)),
+                 ("Utilities", int(state.utilities))]
+    for slot, amt in (bill.get("debt_minimums") or {}).items():
+        name = str(getattr(slot, "value", slot)).replace("_", " ").title()
+        money_out.append((f"{name} (min. payment)", int(amt)))
+    if tax and tax.get("paid"):
+        money_out.append(("Year-end taxes", int(tax["paid"])))
+    if ev_cash < 0:
+        money_out.append((event["label"], -ev_cash))
+
+    def rows(items, cls, sign):
+        out = []
+        for label, amt in items:
+            if not amt:
+                continue
+            v = ("+" if sign > 0 else "−") + money(amt)
+            out.append(f"<div class='billrow'><span>{label}</span><span class='{cls}'>{v}</span></div>")
+        return "".join(out)
+
+    short = ""
+    if bill.get("shortfall"):
+        short = (f"<div class='billshort'>&#9888; You were short by {money(int(bill.get('gap', 0)))} — "
+                 f"the gap was borrowed onto a credit card at {int(config.APR['credit_card'] * 100)}% APR.</div>")
+
+    return (f"<details class='bill' open><summary class='billcap'>This month's money "
+            f"<span class='billtot'>{money(int(state.cash))} to work with</span></summary>"
+            f"{rows(money_in, 'bin', +1)}<div class='billsep'></div>"
+            f"{rows(money_out, 'bout', -1)}{short}</details>")
+
+
 # --- milestone banner ---
 
 def milestone_html(m) -> str:
