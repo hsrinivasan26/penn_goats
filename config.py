@@ -3,6 +3,12 @@
 # !!! IMPORTANT !!!
 # I spent 4 hours hand tuning so that paths A/B are roughly equal in difficulty (50/50)
 # If you have any issues with these, please consult the whole team as a whole!
+#
+# REBALANCE (mentor feedback): the game is now intentionally hard (~40% win under skilled
+# play, not 50%). Happiness decays faster and can't be binged back up (leisure cap); random
+# events are rarer (25%) and evenly weighted; targets were re-derived by simulation for the
+# new job board. Paths A/B are still tuned to be roughly equal. Re-run the balance sim and
+# check with the team before changing the happiness knobs, EVENTS, or PATHS targets.
 
 # Game length & goal
 TURN_LIMIT = 60            # months (5 years)
@@ -49,13 +55,15 @@ STRESS_WEIGHT = {
 # Essentials (monthly). Trimmed from a $2000 baseline to give Path A room to survive.
 ESSENTIALS = {"rent": 1100, "food": 380, "transport": 230, "utilities": 140}
 
-# Happiness
-DECAY = 4
+# Happiness  (rebalanced for a harder game -- see README "Balance" / consult the team)
+DECAY = 7                 # natural decay per month (was 4: happiness was too easy to hold)
 GAIN_SCALE = 1.5          # leisure_happiness = round(1.5 * sqrt(spend))
+LEISURE_HAPPINESS_CAP = 8 # max happiness a single month of leisure can buy -- can't be binged,
+                          # so recovering from a happiness hole takes several steady months
 STRESS_LIMIT = 0.35       # weighted-debt / annual-gross ratio above which stress applies
 STRESS_PENALTY = 5
 SHORTFALL_PENALTY = 15
-HAPPINESS_START = 60
+HAPPINESS_START = 50      # was 60: a lower buffer makes the opening months genuinely risky
 
 # Event table: exactly one bucket fires per turn; probs sum to 100.
 # magnitude = inclusive [low, high] dollar range; sign = +/- direction.
@@ -67,26 +75,31 @@ HAPPINESS_START = 60
 # NOTE: match/raise were added AFTER the original 50/50 tuning. They pull 2% from
 # small_pos and 2% from mood; a durable raise makes the game a touch easier, so
 # RE-RUN the balance sim (python play.py --auto) and check with the team before shipping.
+# Rebalanced: events now fire only 25% of months (quiet 75%), and the 25% is spread evenly
+# across the eight event buckets (3.125% each). roll_bucket sums these floats to exactly 100.
 EVENTS = [
-    {"key": "quiet",     "prob": 30, "magnitude": [0, 0],      "sign": +1},
-    {"key": "small_neg", "prob": 22, "magnitude": [50, 300],   "sign": -1},
-    {"key": "mod_neg",   "prob": 8,  "magnitude": [300, 700],  "sign": -1, "gross_mult": 0.90},
-    {"key": "large_neg", "prob": 1,  "magnitude": [800, 2000], "sign": -1, "set_unemployed": True},
-    {"key": "small_pos", "prob": 20, "magnitude": [50, 300],   "sign": +1},
-    {"key": "match",     "prob": 2,  "magnitude": [50, 250],   "sign": +1},
-    {"key": "large_pos", "prob": 3,  "magnitude": [800, 3000], "sign": +1, "gross_mult": 1.10},
-    {"key": "raise",     "prob": 2,  "magnitude": [50, 200],   "sign": +1, "gross_mult": 1.10},
-    {"key": "mood",      "prob": 12, "happiness_range": [-10, 10]},
+    {"key": "quiet",     "prob": 75.0,  "magnitude": [0, 0],      "sign": +1},
+    {"key": "small_neg", "prob": 3.125, "magnitude": [50, 300],   "sign": -1},
+    {"key": "mod_neg",   "prob": 3.125, "magnitude": [300, 700],  "sign": -1, "gross_mult": 0.90},
+    {"key": "large_neg", "prob": 3.125, "magnitude": [800, 2000], "sign": -1, "set_unemployed": True},
+    {"key": "small_pos", "prob": 3.125, "magnitude": [50, 300],   "sign": +1},
+    {"key": "match",     "prob": 3.125, "magnitude": [50, 250],   "sign": +1},
+    {"key": "large_pos", "prob": 3.125, "magnitude": [800, 3000], "sign": +1, "gross_mult": 1.10},
+    {"key": "raise",     "prob": 3.125, "magnitude": [50, 200],   "sign": +1, "gross_mult": 1.10},
+    {"key": "mood",      "prob": 3.125, "happiness_range": [-10, 10]},
 ]
 
 # Starting scenarios (both early-career). Not the differentiation-guide's Path A/B.
-# Per-path `target` calibrated so both paths win ~50% of the time under skilled
-# play -- they differ because Path B earns far more, so it needs a higher bar to
-# be *equally* difficult. See README "Balance" for how these were derived.
+# REBALANCED for the tiered job board: income now climbs to ~$7,200/mo, so the old
+# $23k/$68k targets became trivial. Per-path `target` was re-derived by simulation
+# (300 seeds, skilled play that climbs the career ladder) to land near a 40% win rate
+# on each path -- an intentionally hard game. gross_month is only the STARTING salary now;
+# players change jobs via the board (see ui/jobs.py). !!! Team: re-run the sim before
+# retuning these -- the job board makes them very sensitive.
 PATHS = {
-    "A": {"gross_month": 3300, "cash": 500, "student_loan": None, "target": 23_000},
+    "A": {"gross_month": 3300, "cash": 500, "student_loan": None, "target": 190_000},
     "B": {"gross_month": 5000, "cash": 500,
-          "student_loan": {"principal": 30_000, "apr": 0.06}, "target": 68_000},
+          "student_loan": {"principal": 30_000, "apr": 0.06}, "target": 225_000},
 }
 
 # Big-move defaults (Phase 6)

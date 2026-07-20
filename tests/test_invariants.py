@@ -70,6 +70,7 @@ def test_bankruptcy_comes_from_a_shortfall_streak():
     """Lose after 3 months in a row failing to cover essentials -- not from negative net worth."""
     s = new_game("A", seed=9)
     s.employed = False                          # no income -> guaranteed shortfalls
+    s.happiness = 100                           # keep burnout out of it: isolate the bankruptcy rule
     for _ in range(5):
         run_turn(s, SeededRNG(9), forced_event={"key": "small_pos", "amount": 50})
         if s.game_over:
