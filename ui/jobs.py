@@ -5,8 +5,10 @@ can take is gated two ways (whichever is higher wins):
 
   * education floor  -- your starting path. No degree (path A) starts at the Entry tier;
     a graduate (path B) starts already qualified for the Skilled tier.
-  * experience       -- months actually worked. Tenure unlocks the next tier up, so even a
-    non-graduate climbs into Skilled and then Professional work by putting in the months.
+  * experience       -- months of work you actually PERFORMED. The monthly money quiz IS
+    the job: passing it logs that month of experience. Coasting past a month (skipping or
+    failing the quiz) still pays the salary, but the career doesn't move -- you can't get
+    promoted for work you didn't do.
 
 Everything here is pure data + pure functions (no Streamlit, no engine mutation), so it's
 easy to unit-test and the dialog just renders what these return.
@@ -15,18 +17,8 @@ easy to unit-test and the dialog just renders what these return.
 # tier -> player-facing name
 TIER_NAMES = {0: "Entry", 1: "Skilled", 2: "Professional"}
 
-# months of work that add +1 / +2 tiers on top of the education floor
+# months of performed work (passed quizzes) that add +1 / +2 tiers on top of the education floor
 EXP_FOR_TIER = {1: 12, 2: 30}
-
-# Passing the monthly money quiz earns "study credit": extra months of career experience.
-# Capped so the quiz accelerates a career (financial literacy pays) but can never replace
-# actually working -- deliberately neither harsh nor free.
-QUIZ_CREDIT_CAP = 6
-
-
-def total_experience(months_worked: int, quiz_credit: int = 0) -> int:
-    """Effective experience: months on the job plus capped study credit from quizzes."""
-    return months_worked + min(max(0, quiz_credit), QUIZ_CREDIT_CAP)
 
 # The catalog. Salaries are monthly gross. Kept deliberately spread so upgrading matters.
 JOBS = [

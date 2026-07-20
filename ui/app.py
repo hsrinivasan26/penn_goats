@@ -64,7 +64,6 @@ def start_game(path):
     ss.last_milestone = None
     ss.months_worked = 0
     ss.job_title = jobs.START_TITLE.get(path)
-    ss.quiz_credit = 0                  # study credit earned by passing monthly quizzes
     ss.quiz_taken_for = None            # turn number of this month's attempt (one per month)
     ss.quiz = None
     go("play")
@@ -223,13 +222,12 @@ def dlg_paydebt():
 def dlg_jobmoves():
     s = ss.state
     _cash_line(s)
-    credit = min(ss.get("quiz_credit", 0), jobs.QUIZ_CREDIT_CAP)
-    exp = jobs.total_experience(ss.get("months_worked", 0), credit)
+    exp = ss.get("months_worked", 0)
     if s.employed:
         cur = ss.get("job_title") or jobs.title_for_gross(int(s.gross_month)) or "Current role"
-        study = f" (incl. {credit} from quizzes)" if credit else ""
         st.markdown(f"**Your job** — {cur} · {render.money(int(s.gross_month))}/mo "
-                    f"&nbsp;·&nbsp; {exp} months' experience{study}")
+                    f"&nbsp;·&nbsp; {exp} month{'s' if exp != 1 else ''} of experience")
+        st.caption("Experience comes from doing the work: pass the monthly money quiz to log a month.")
     else:
         st.markdown("**You're between jobs** — take a role below to start earning again.")
     offers = sorted(jobs.offerings(s.path, exp), key=lambda j: -j["gross"])
@@ -314,17 +312,16 @@ def screen_play():
         st.write("")
         bc = st.columns([1.2, 1.6, 2.2])
         taken = ss.get("quiz_taken_for") == s.turn
-        if bc[1].button("📚 Done — already took it" if taken else "📚 Money quiz",
+        if bc[1].button("💼 Work done for this month" if taken else "💼 Do your job — money quiz",
                         disabled=taken, use_container_width=True,
-                        help="Pass this month's quiz (65%) to earn a month of career "
-                             "experience toward your next job tier. One attempt per month."):
+                        help="The quiz is your month's work. Pass it (65%) to log a month of "
+                             "experience toward your next role — skip or fail and your career "
+                             "stands still. One shot per month."):
             ss.quiz = None
             ss.quiz_home = "play"
             ss.quiz_day = s.turn                    # topic rotates with the month
             go("quiz"); st.rerun()
         if bc[0].button("End the month ▶", type="primary"):
-            if s.employed:
-                ss.months_worked = ss.get("months_worked", 0) + 1   # tenure unlocks better jobs
             turn.end_month(s)
             ss.last_milestone = s._milestone      # capture before begin_month clears it
             if s.game_over is not None:
@@ -342,7 +339,9 @@ def screen_howto():
         ("1", "A paycheck arrives", "See what's really left after taxes — take-home, not the offer."),
         ("2", "Essentials come out", "Rent, food, transport, and utilities are paid automatically."),
         ("3", "Life happens", "A surprise hits — a repair, a bonus, sometimes a layoff."),
-        ("4", "You choose", "Invest, pay down debt, treat yourself, or make a big move."),
+        ("4", "You do your job", "The money quiz is your month's work — pass it to log experience "
+              "and qualify for better-paying roles."),
+        ("5", "You choose", "Invest, pay down debt, treat yourself, or make a big move."),
     ]
     cells = "".join(f"<div class='step'><div class='no'>{n}</div><div><div class='st'>{t}</div>"
                     f"<div class='sd'>{d}</div></div></div>" for n, t, d in steps)
@@ -470,8 +469,8 @@ def screen_quiz():
                     "Pass mark is 65%.</p>", unsafe_allow_html=True)
         ingame = ss.get("quiz_home") == "play"
         if ingame:
-            st.caption("Pass to earn **+1 month of career experience** toward your next job tier "
-                       f"(up to {jobs.QUIZ_CREDIT_CAP} total). One attempt per month.")
+            st.caption("This is your month's work. Pass (65%) and the month counts toward your "
+                       "next role — fail or walk away, and it doesn't. One shot per month.")
         c = st.columns([1, 1, 3])
         if c[0].button("Start quiz", type="primary"):
             _start_quiz(); st.rerun()
@@ -494,18 +493,15 @@ def screen_quiz():
         if ingame:
             if passed and not ss.get("quiz_credited"):
                 ss.quiz_credited = True
-                ss.quiz_awarded = ss.get("quiz_credit", 0) < jobs.QUIZ_CREDIT_CAP
-                if ss.quiz_awarded:
-                    ss.quiz_credit = ss.get("quiz_credit", 0) + 1
+                ss.months_worked = ss.get("months_worked", 0) + 1
             if passed:
-                credit = min(ss.get("quiz_credit", 0), jobs.QUIZ_CREDIT_CAP)
-                line = (f"+1 month of experience — {credit}/{jobs.QUIZ_CREDIT_CAP} study credit earned"
-                        if ss.get("quiz_awarded")
-                        else f"Study credit already maxed ({jobs.QUIZ_CREDIT_CAP}/{jobs.QUIZ_CREDIT_CAP})")
-                st.markdown(f"<div class='milestone'><div><span class='mlab'>★ Career credit</span>"
-                            f"<div class='mtitle'>{line}</div></div></div>", unsafe_allow_html=True)
+                exp = ss.get("months_worked", 0)
+                st.markdown(f"<div class='milestone'><div><span class='mlab'>★ Month of work logged</span>"
+                            f"<div class='mtitle'>+1 month of experience — {exp} total toward "
+                            f"your next role</div></div></div>", unsafe_allow_html=True)
             else:
-                st.caption("No credit this time — the pass mark is 65%. Try again next month.")
+                st.caption("A rough month at work — no experience logged. The pass mark is 65%; "
+                           "your next shot comes next month.")
             if st.button("← Back to the game", type="primary"):
                 ss.quiz = None; go("play"); st.rerun()
             return

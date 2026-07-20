@@ -60,13 +60,13 @@ def test_start_titles_exist_in_catalog():
     assert jobs.START_TITLE["B"] in titles
 
 
-def test_quiz_study_credit_adds_and_caps():
-    assert jobs.total_experience(10, 0) == 10
-    assert jobs.total_experience(10, 3) == 13
-    assert jobs.total_experience(10, 99) == 10 + jobs.QUIZ_CREDIT_CAP   # capped
-    assert jobs.total_experience(10, -5) == 10                          # never negative
-    # credit can genuinely pull an unlock earlier: 6 worked + 6 credit == the 12-month gate
-    assert jobs.available_tier("A", jobs.total_experience(6, 6)) == 1
+def test_experience_is_earned_months_not_elapsed_time():
+    """The quiz IS the job: only months of passed quizzes count toward tier unlocks, so a
+    player who never engages stays at their education floor forever."""
+    assert jobs.available_tier("A", 0) == 0            # 60 elapsed months, 0 worked -> still Entry
+    assert jobs.available_tier("A", 12) == 1           # 12 months of real work -> Skilled
+    assert not hasattr(jobs, "total_experience")       # the old free-credit path is gone
+    assert not hasattr(jobs, "QUIZ_CREDIT_CAP")
 
 
 def test_quiet_month_renders_no_event_banner():
