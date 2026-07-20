@@ -19,7 +19,7 @@ def test_graduate_starts_qualified_for_skilled():
     assert jobs.education_floor("B") == 1
     offs = jobs.offerings("B", months_worked=0)
     assert max(j["tier"] for j in offs) == 1
-    assert max(j["gross"] for j in offs) == 5000      # matches config.PATHS["B"] start
+    assert max(j["gross"] for j in offs) == 4800      # matches config.PATHS["B"] start
 
 
 def test_experience_unlocks_higher_tiers_for_non_grad():
@@ -30,7 +30,7 @@ def test_experience_unlocks_higher_tiers_for_non_grad():
 
 def test_grad_reaches_professional_faster():
     assert jobs.available_tier("B", 12) == 2          # floor 1 + 1 tenure tier
-    assert max(j["gross"] for j in jobs.offerings("B", 12)) == 7200
+    assert max(j["gross"] for j in jobs.offerings("B", 12)) == 6300
 
 
 def test_tier_is_capped_at_the_top():

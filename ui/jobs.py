@@ -29,10 +29,10 @@ JOBS = [
     {"title": "Bookkeeper",             "gross": 3800, "tier": 1},
     {"title": "Dental assistant",       "gross": 4200, "tier": 1},
     {"title": "IT support specialist",  "gross": 4600, "tier": 1},
-    {"title": "Licensed practical nurse", "gross": 5000, "tier": 1},
+    {"title": "Licensed practical nurse", "gross": 4800, "tier": 1},
     {"title": "Data analyst",           "gross": 5600, "tier": 2},
-    {"title": "Registered nurse",       "gross": 6400, "tier": 2},
-    {"title": "Software engineer",      "gross": 7200, "tier": 2},
+    {"title": "Registered nurse",       "gross": 5800, "tier": 2},
+    {"title": "Software engineer",      "gross": 6300, "tier": 2},
 ]
 
 # The job each starting path begins in (its gross matches config.PATHS[path]["gross_month"]).

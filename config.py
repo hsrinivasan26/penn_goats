@@ -52,8 +52,8 @@ STRESS_WEIGHT = {
     "student":     0.15,  # light, but still a real (small) drag
 }
 
-# Essentials (monthly). Trimmed from a $2000 baseline to give Path A room to survive.
-ESSENTIALS = {"rent": 1100, "food": 380, "transport": 230, "utilities": 140}
+# Essentials (monthly). Back to a $2,000 baseline: tighter months, especially early on.
+ESSENTIALS = {"rent": 1200, "food": 400, "transport": 240, "utilities": 160}
 
 # Happiness  (rebalanced for a harder game -- see README "Balance" / consult the team)
 DECAY = 7                 # natural decay per month (was 4: happiness was too easy to hold)
@@ -90,16 +90,17 @@ EVENTS = [
 ]
 
 # Starting scenarios (both early-career). Not the differentiation-guide's Path A/B.
-# REBALANCED for the tiered job board: income now climbs to ~$7,200/mo, so the old
-# $23k/$68k targets became trivial. Per-path `target` was re-derived by simulation
-# (300 seeds, skilled play that climbs the career ladder) to land near a 40% win rate
-# on each path -- an intentionally hard game. gross_month is only the STARTING salary now;
-# players change jobs via the board (see ui/jobs.py). !!! Team: re-run the sim before
-# retuning these -- the job board makes them very sensitive.
+# REBALANCED for the tiered job board, then grounded: salaries in ui/jobs.py are
+# early-career figures (the ladder tops out at $6,300/mo, not $7,200), essentials are
+# $2,000/mo, and the targets below were re-derived by simulation (400 seeds, skilled
+# play that climbs the ladder) to land at a 40% win rate on each path -- hard, with
+# less-astronomical goals ("$150k by age 23" instead of $190k). gross_month is only
+# the STARTING salary; players change jobs via the board. !!! Team: re-run the sim
+# before retuning -- the job board makes these very sensitive.
 PATHS = {
-    "A": {"gross_month": 3300, "cash": 500, "student_loan": None, "target": 190_000},
-    "B": {"gross_month": 5000, "cash": 500,
-          "student_loan": {"principal": 30_000, "apr": 0.06}, "target": 225_000},
+    "A": {"gross_month": 3300, "cash": 500, "student_loan": None, "target": 150_000},
+    "B": {"gross_month": 4800, "cash": 500,
+          "student_loan": {"principal": 30_000, "apr": 0.06}, "target": 168_000},
 }
 
 # Big-move defaults (Phase 6)
