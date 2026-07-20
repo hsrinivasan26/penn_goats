@@ -1,5 +1,6 @@
 """Acceptance tests: the spec's worked examples must match to the dollar."""
 
+import config
 from game.state import new_game
 from game.rng import SeededRNG
 from game.formulas import paystub
@@ -21,8 +22,16 @@ def _pin_spec_numbers(s):
     s.rent, s.food, s.transport, s.utilities = 1200, 400, 250, 150
 
 
-def test_worked_turn_1():
-    """Example 1: Path A, turn 1, forced $150 car repair, then leisure 100 + invest 200 index."""
+def test_worked_turn_1(monkeypatch):
+    """Example 1: Path A, turn 1, forced $150 car repair, then leisure 100 + invest 200 index.
+
+    Pins the happiness constants to the spec's original values so this worked example keeps
+    verifying the engine math even after config.py is tuned for balance (decay, cap, start).
+    """
+    monkeypatch.setattr(config, "DECAY", 4)
+    monkeypatch.setattr(config, "HAPPINESS_START", 60)
+    monkeypatch.setattr(config, "GAIN_SCALE", 1.5)
+    monkeypatch.setattr(config, "LEISURE_HAPPINESS_CAP", 99)   # non-binding, as in the spec
     s = new_game("A", seed=1)
     _pin_spec_numbers(s)
 

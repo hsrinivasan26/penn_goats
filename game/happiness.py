@@ -15,7 +15,9 @@ def phase_happiness(state) -> None:
     if state.shortfall_flag:
         h -= config.SHORTFALL_PENALTY
 
-    h += leisure_happiness(state.leisure_spend)
+    # Leisure lifts mood, but only up to a monthly cap -- you can't binge-buy happiness back,
+    # so a dip takes several steady months (and money) to climb out of.
+    h += min(config.LEISURE_HAPPINESS_CAP, leisure_happiness(state.leisure_spend))
     h += state.event_happiness_delta + state.milestone_bonus
 
     state.happiness = max(0, min(100, round_half_up(h)))
