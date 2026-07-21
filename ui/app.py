@@ -80,9 +80,7 @@ def start_game(path):
 def screen_title():
     if "city_seed" not in ss:
         ss.city_seed = random.randint(0, 999_999)      # a new skyline every session
-    _mascot = os.path.join(os.path.dirname(__file__), "static", "mascot.png")
-    st.markdown(citybg.city_html(seed=ss.city_seed, won=ss.get("mascot_won", False),
-                                 mascot_href="app/static/mascot.png" if os.path.exists(_mascot) else None),
+    st.markdown(citybg.city_html(seed=ss.city_seed, won=ss.get("mascot_won", False)),
                 unsafe_allow_html=True)
     st.markdown(
         "<div class='title-wrap'>"
@@ -491,7 +489,7 @@ def screen_results():
         ss.coach_for = id(s)
     ct = "Your coach · AI" if ss.coach_is_ai else "Your coach"
     st.markdown(f"<div class='coach'><div><div class='ct'>{ct}</div>"
-                f"<p>{ss.coach_text}</p></div></div>", unsafe_allow_html=True)
+                f"<p>{render.html_safe(ss.coach_text)}</p></div></div>", unsafe_allow_html=True)
 
     if earned_now:
         chips = "".join(f"<span class='tchip'>{t['icon']} {t['name']}</span>"
@@ -572,17 +570,18 @@ def screen_quiz():
         fb = ss.quiz_feedback
         p = fb["prompt"]
         st.markdown(f"<div class='amsg'>Question {p['number']} of {p['total']}</div>", unsafe_allow_html=True)
-        st.markdown(f"**{p['stem']}**")
+        st.markdown(f"**{render.md_safe(p['stem'])}**")
         for opt in p["options"]:
-            oid = opt["id"]
+            oid, otext = opt["id"], render.html_safe(opt["text"])
             if oid == fb["correct_option_id"]:
-                st.markdown(f"<div class='qopt qgood'>✓ {oid}. {opt['text']}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='qopt qgood'>✓ {oid}. {otext}</div>", unsafe_allow_html=True)
             elif oid == fb["chosen"] and not fb["correct"]:
-                st.markdown(f"<div class='qopt qbad'>✗ {oid}. {opt['text']}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='qopt qbad'>✗ {oid}. {otext}</div>", unsafe_allow_html=True)
             else:
-                st.markdown(f"<div class='qopt'>{oid}. {opt['text']}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='qopt'>{oid}. {otext}</div>", unsafe_allow_html=True)
         verdict = "Correct!" if fb["correct"] else f"Not quite — the answer was {fb['correct_option_id']}."
-        st.markdown(f"<div class='qexpl'><b>{verdict}</b> {fb['explanation']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='qexpl'><b>{verdict}</b> {render.html_safe(fb['explanation'])}</div>",
+                    unsafe_allow_html=True)
         if st.button("See results" if q.finished else "Next question ▶", type="primary"):
             ss.quiz_phase, ss.quiz_feedback = "answer", None
             st.rerun()
@@ -595,8 +594,8 @@ def screen_quiz():
     src = "AI" if ss.get("quiz_ai") else "practice set"
     st.markdown(f"<div class='amsg'>Question {p['number']} of {p['total']} · "
                 f"{ss.quiz_topic.title()} · {diff} · {src}</div>", unsafe_allow_html=True)
-    st.markdown(f"**{p['stem']}**")
-    labels = {opt["id"]: f"{opt['id']}.  {opt['text']}" for opt in p["options"]}
+    st.markdown(f"**{render.md_safe(p['stem'])}**")
+    labels = {opt["id"]: f"{opt['id']}.  {render.md_safe(opt['text'])}" for opt in p["options"]}
     choice = st.radio("Choose one:", [opt["id"] for opt in p["options"]],
                       format_func=lambda x: labels[x], key=f"quiz_{p['id']}", index=None)
     if st.button("Submit answer", type="primary", disabled=choice is None):

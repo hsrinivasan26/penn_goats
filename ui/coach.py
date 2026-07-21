@@ -48,7 +48,8 @@ def _build_prompt(state, outcome: str) -> str:
     return (
         "You are a warm, plain-spoken financial coach debriefing a player's 5-year run in a "
         "budgeting game. Write 2 sentences, second person, encouraging and specific. Use ONLY "
-        "the figures below — never invent a number, name, or event. No lists, no preamble.\n\n"
+        "the figures below — never invent a number, name, or event. Plain text only: no "
+        "lists, no preamble, no markdown, no LaTeX.\n\n"
         f"Figures: {_facts(state, outcome)}"
     )
 

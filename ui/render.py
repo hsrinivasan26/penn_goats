@@ -1,6 +1,27 @@
 """HTML render helpers -- turn game state into markup for st.markdown(unsafe_allow_html=True)."""
 
+import html as _html
+import re as _re
+
 import config
+
+# Model output (Gemini) sometimes contains LaTeX delimiters, and any two $ amounts in one
+# markdown string become accidental KaTeX math. All model text passes through one of these
+# before display.
+_LATEX_DELIMS = _re.compile(r"\\\(|\\\)|\\\[|\\\]|\$\$|\\text\{|\\frac|\\times|\\cdot")
+
+
+def md_safe(text) -> str:
+    """Model text -> safe for a pure-markdown render (st.markdown / st.radio labels).
+    Strips LaTeX constructs and escapes $ so dollar pairs never render as math."""
+    t = _LATEX_DELIMS.sub(" ", str(text or ""))
+    return t.replace("$", "\\$")
+
+
+def html_safe(text) -> str:
+    """Model text -> safe to interpolate into our raw-HTML blocks (tags neutralized,
+    LaTeX stripped; $ is fine inside raw HTML)."""
+    return _html.escape(_LATEX_DELIMS.sub(" ", str(text or "")))
 
 
 # --- formatting ---

@@ -224,6 +224,9 @@ Reference items showing the required format and quality. Do NOT copy these verba
 <output_discipline>
 - Output ONLY the JSON object. No preamble, no explanation, no markdown code fences, and
   no text before or after the JSON.
+- Every string value is PLAIN TEXT: no LaTeX or math markup of any kind (no backslash
+  commands, no dollar-sign math delimiters), no markdown, no HTML. Write money as plain
+  figures like $1,200 and math as simple arithmetic like "15% of $1,000 = $150".
 - The JSON must be valid: double-quoted keys and strings, no trailing commas, no comments,
   no NaN/Infinity.
 - Do not truncate. If the requested bank is too large to finish in one response, generate a
