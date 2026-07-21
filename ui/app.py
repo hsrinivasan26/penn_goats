@@ -543,7 +543,7 @@ def screen_quiz():
         day = ss.get("quiz_day", 0)
         topic = quiz.prefetch(day)      # warm the bank while the player reads
         st.markdown("<h2 style='margin-bottom:2px'>Money quiz</h2>"
-                    f"<p style='color:#9aa0ac;font-size:13.5px'>Today's topic: "
+                    f"<p style='color:#9aa0ac;font-size:16.5px'>Today's topic: "
                     f"<b style='color:#e8e8ea'>{topic.title()}</b> — 8–10 questions, easy to hard. "
                     "Pass mark is 65%.</p>", unsafe_allow_html=True)
         st.caption("Your month's work: pass (65%) and the month counts toward your next role. "
@@ -585,8 +585,8 @@ def screen_quiz():
     if ss.get("quiz_phase") == "review":
         fb = ss.quiz_feedback
         p = fb["prompt"]
-        st.markdown(f"<div class='amsg'>Question {p['number']} of {p['total']}</div>", unsafe_allow_html=True)
-        st.markdown(f"**{render.md_safe(p['stem'])}**")
+        st.markdown(f"<div class='qmeta'>Question {p['number']} of {p['total']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='qstem'>{render.html_safe(p['stem'])}</div>", unsafe_allow_html=True)
         for opt in p["options"]:
             oid, otext = opt["id"], render.html_safe(opt["text"])
             if oid == fb["correct_option_id"]:
@@ -608,9 +608,9 @@ def screen_quiz():
     item = q.current()
     diff = mcq.DIFFICULTY_LABELS.get(item.difficulty.lower(), item.difficulty.title())
     src = "AI" if ss.get("quiz_ai") else "practice set"
-    st.markdown(f"<div class='amsg'>Question {p['number']} of {p['total']} · "
+    st.markdown(f"<div class='qmeta'>Question {p['number']} of {p['total']} · "
                 f"{ss.quiz_topic.title()} · {diff} · {src}</div>", unsafe_allow_html=True)
-    st.markdown(f"**{render.md_safe(p['stem'])}**")
+    st.markdown(f"<div class='qstem'>{render.html_safe(p['stem'])}</div>", unsafe_allow_html=True)
     labels = {opt["id"]: f"{opt['id']}.  {render.md_safe(opt['text'])}" for opt in p["options"]}
     choice = st.radio("Choose one:", [opt["id"] for opt in p["options"]],
                       format_func=lambda x: labels[x], key=f"quiz_{p['id']}", index=None)
