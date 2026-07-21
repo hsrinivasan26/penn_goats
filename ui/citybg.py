@@ -66,6 +66,6 @@ def _mascots(show_win: bool, show_titles: bool) -> str:
 def city_html(seed: int = 7, show_win: bool = False, show_titles: bool = False) -> str:
     """The whole backdrop: mascots (furthest), far skyline, near skyline. The buildings
     are dark gold -- the city the player is trying to strike it rich in."""
-    far = _layer(seed, "far", 120, 300, "#3a3118", "#584a20", "#c9a54a", 0.06, 90)
-    near = _layer(seed + 1, "near", 60, 190, "#241d0e", "#403414", "#f5b642", 0.08, 48)
+    far = _layer(seed, "far", 120, 300, "#262012", "#3c3318", "#8f7433", 0.06, 90)
+    near = _layer(seed + 1, "near", 60, 190, "#211b0e", "#393014", "#e3a93d", 0.08, 48)
     return f'<div class="citybg">{_mascots(show_win, show_titles)}{far}{near}</div>'
