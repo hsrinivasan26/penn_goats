@@ -6,10 +6,16 @@ from .formulas import round_half_up, leisure_happiness
 
 
 def phase_happiness(state) -> None:
-    # Natural decay is exponential: a fixed fraction of CURRENT happiness (with a floor so
-    # zero stays reachable). Contentment is upkeep -- the happier you are, the more it
-    # costs to stay there, so leisure is a recurring budget line, not a one-off purchase.
-    decay = max(config.DECAY_FLOOR, round_half_up(config.DECAY_RATE * state.happiness))
+    # Decay accelerates the longer the player holds off on leisure: base the month you
+    # treat yourself, multiplied for every consecutive month you don't. Spending anything
+    # on fun resets the spiral, so happiness is a recurring budget line you can't defer
+    # for long.
+    if state.leisure_spend > 0:
+        state.months_without_leisure = 0
+    decay = min(config.DECAY_MAX,
+                round_half_up(config.DECAY_BASE * config.DECAY_GROWTH ** state.months_without_leisure))
+    if state.leisure_spend == 0:
+        state.months_without_leisure += 1
     h = state.happiness - decay
 
     debt_ratio = state.weighted_debt() / max(1, state.gross_month * 12)

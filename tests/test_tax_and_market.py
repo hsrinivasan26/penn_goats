@@ -141,24 +141,50 @@ def test_halfway_milestone_tracks_the_actual_target():
     assert "halfway" in s.milestones_fired
 
 
-# ---- exponential happiness decay -------------------------------------------
+# ---- happiness decay accelerates with neglect ------------------------------
 
-def test_happiness_decay_scales_with_happiness():
+def test_decay_starts_at_base_and_accelerates_without_leisure():
     from game.happiness import phase_happiness
-    for start, expected_decay in ((50, 5), (80, 8), (100, 10), (20, 3)):  # 20 -> floor 3
-        s = new_game("A", seed=1)
-        s.happiness = start
+    s = new_game("A", seed=1)
+    s.happiness = 100
+    drops = []
+    for _ in range(4):                            # never spends on fun
+        before = s.happiness
+        s.reset_scratch()
         phase_happiness(s)
-        assert s.happiness == start - expected_decay, f"start {start}"
+        drops.append(before - s.happiness)
+    assert drops[0] == config.DECAY_BASE          # month 1 of neglect: the base 5
+    assert drops == sorted(drops) and drops[-1] > drops[0]   # faster and faster
+    assert drops[1] == round(config.DECAY_BASE * config.DECAY_GROWTH)
 
 
-def test_neglect_still_reaches_burnout():
+def test_spending_on_leisure_resets_the_spiral():
+    from game.happiness import phase_happiness
+    from game import choices
+    s = new_game("A", seed=1)
+    s.happiness = 100
+    for _ in range(3):                            # build up the neglect spiral
+        s.reset_scratch()
+        phase_happiness(s)
+    assert s.months_without_leisure == 3
+    s.reset_scratch()
+    s.cash = 1_000
+    choices.leisure(s, 40)                        # any fun this month resets it
+    before = s.happiness
+    phase_happiness(s)
+    assert s.months_without_leisure == 0
+    gain = min(config.LEISURE_HAPPINESS_CAP, 9)   # 1.5*sqrt(40) ~ 9 -> capped at 8
+    assert before - s.happiness == config.DECAY_BASE - gain
+
+
+def test_total_neglect_burns_out_within_months():
     from game.happiness import phase_happiness
     from game.enums import GameOver
-    s = new_game("A", seed=1)                     # starts at 50, no leisure ever
+    s = new_game("A", seed=1)                     # starts at 50, never any fun
     months = 0
-    while s.game_over is None and months < 40:
+    while s.game_over is None and months < 20:
+        s.reset_scratch()
         phase_happiness(s)
         months += 1
     assert s.game_over == GameOver.BURNOUT
-    assert months <= 25                           # the floor keeps zero reachable
+    assert months <= 7                            # 5+7+9+12+16+22 ... collapses fast

@@ -97,7 +97,7 @@ def rings_html(state) -> str:
         _ring(kmoney(liab), liab / annual, "#ef4444", "Debt",
               f"<div class='tt'>Debt · {money(liab)}</div><p>What you owe. Interest is added each month.</p>"),
         _ring(str(state.happiness), state.happiness / 100, happiness_color(state.happiness), "Happiness",
-              "<div class='tt'>Happiness</div><p>Falls every month — budget some fun. At 0 you burn out.</p>"),
+              "<div class='tt'>Happiness</div><p>Falls faster the longer you skip fun — spending resets it. At 0 you burn out.</p>"),
     ])
     nwc = "#34d399" if nw >= 0 else "#ef4444"
     return (f'<div class="rail"><div class="railcap">Your standing</div>{rings}'

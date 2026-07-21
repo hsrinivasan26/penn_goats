@@ -70,10 +70,13 @@ STRESS_WEIGHT = {
 ESSENTIALS = {"rent": 1200, "food": 400, "transport": 240, "utilities": 160}
 
 # Happiness  (rebalanced for a harder game -- see README "Balance" / consult the team)
-DECAY_RATE = 0.10         # EXPONENTIAL decay: each month happiness falls by 10% of itself.
-                          # 5/mo at the 50 start, 8/mo living the good life at 80 -- staying
-                          # happy is steady upkeep, and being happier costs more to maintain.
-DECAY_FLOOR = 3           # decay never drops below this, so total neglect still hits burnout
+# Decay is EXPONENTIAL IN NEGLECT: the longer you go without spending anything on fun,
+# the faster happiness drains -- 5 the first month, then ~7, 9, 12, 16... Spending any
+# leisure this month resets the spiral back to the base. Forces fun into the budget as a
+# recurring line, not a one-off purchase.
+DECAY_BASE = 5            # natural decay in a month where you treated yourself
+DECAY_GROWTH = 1.35       # multiplier per consecutive month WITHOUT leisure
+DECAY_MAX = 25            # spiral cap (sanity bound)
 GAIN_SCALE = 1.5          # leisure_happiness = round(1.5 * sqrt(spend))
 LEISURE_HAPPINESS_CAP = 8 # max happiness a single month of leisure can buy -- can't be binged,
                           # so recovering from a happiness hole takes several steady months
@@ -115,9 +118,9 @@ EVENTS = [
 # the STARTING salary; players change jobs via the board. !!! Team: re-run the sim
 # before retuning -- the job board makes these very sensitive.
 PATHS = {
-    "A": {"gross_month": 3300, "cash": 500, "student_loan": None, "target": 158_000},
+    "A": {"gross_month": 3300, "cash": 500, "student_loan": None, "target": 164_000},
     "B": {"gross_month": 4800, "cash": 500,
-          "student_loan": {"principal": 30_000, "apr": 0.06}, "target": 172_000},
+          "student_loan": {"principal": 30_000, "apr": 0.06}, "target": 179_000},
 }
 
 # Big-move defaults (Phase 6)
