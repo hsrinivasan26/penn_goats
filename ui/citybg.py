@@ -52,20 +52,20 @@ def _layer(seed: int, cls: str, h_lo: int, h_hi: int, body: str, win_dim: str,
 
 def _mascots(show_win: bool, show_titles: bool) -> str:
     """The mascot ducks, towering over the city from behind, filling the flanks of the
-    menu. Black silhouettes (asset alpha untouched) that appear as they're unlocked:
-    the right duck after the first win, the left (gold-top-hat) duck once every title
-    is earned. Colored versions live next to the silhouettes in ui/static for later."""
-    out = []
-    if show_titles:
-        out.append('<img class="cityduck left" src="app/static/mascot-alltitles-sil.png" alt=""/>')
-    if show_win:
-        out.append('<img class="cityduck right" src="app/static/mascot-win-sil.png" alt=""/>')
-    return "".join(out)
+    menu. Both are ALWAYS there as black silhouettes -- the tease. Achievements fill
+    them in with the real colored art: the right duck after the first win, the left
+    (gold-top-hat) duck once every title is earned."""
+    left = "mascot-alltitles.png" if show_titles else "mascot-alltitles-sil.png"
+    right = "mascot-win.png" if show_win else "mascot-win-sil.png"
+    lcls = "cityduck left" + (" earned" if show_titles else "")
+    rcls = "cityduck right" + (" earned" if show_win else "")
+    return (f'<img class="{lcls}" src="app/static/{left}" alt=""/>'
+            f'<img class="{rcls}" src="app/static/{right}" alt=""/>')
 
 
 def city_html(seed: int = 7, show_win: bool = False, show_titles: bool = False) -> str:
     """The whole backdrop: mascots (furthest), far skyline, near skyline. The buildings
     are dark gold -- the city the player is trying to strike it rich in."""
-    far = _layer(seed, "far", 120, 300, "#262012", "#3c3318", "#8f7433", 0.06, 90)
-    near = _layer(seed + 1, "near", 60, 190, "#211b0e", "#393014", "#e3a93d", 0.08, 48)
+    far = _layer(seed, "far", 120, 300, "#262012", "#3c3318", "#8f7433", 0.06, 70)
+    near = _layer(seed + 1, "near", 60, 190, "#211b0e", "#393014", "#e3a93d", 0.08, 36)
     return f'<div class="citybg">{_mascots(show_win, show_titles)}{far}{near}</div>'

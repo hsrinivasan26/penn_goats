@@ -85,11 +85,14 @@ def test_ages_track_birthdays_and_goal():
     assert jobs.goal_age("A") == 23 and jobs.goal_age("B") == 27
 
 
-def test_city_mascots_unlock_by_flag():
+def test_city_mascots_tease_then_fill_in():
     import citybg
     locked = citybg.city_html(seed=3)
-    assert "mascot-" not in locked                          # nothing until you earn it
+    assert "mascot-win-sil.png" in locked                   # silhouettes always loom
+    assert "mascot-alltitles-sil.png" in locked
     won = citybg.city_html(seed=3, show_win=True)
-    assert "mascot-win-sil.png" in won and "alltitles" not in won
+    assert "mascot-win.png" in won                          # first win fills the right duck
+    assert "mascot-alltitles-sil.png" in won                # left still a silhouette
     both = citybg.city_html(seed=3, show_win=True, show_titles=True)
-    assert "mascot-win-sil.png" in both and "mascot-alltitles-sil.png" in both
+    assert "mascot-win.png" in both and "mascot-alltitles.png" in both
+    assert "sil" not in both

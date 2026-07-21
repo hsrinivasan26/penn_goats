@@ -190,9 +190,9 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:-.02em}
   animation:duckrise 1.2s ease both}
 .cityduck.left{left:9%;height:74vh}
 .cityduck.right{right:3%;height:58vh}
+.cityduck.earned{opacity:1;filter:drop-shadow(0 0 34px rgba(245,182,66,.45)) drop-shadow(0 0 5px rgba(245,182,66,.5))}
 @media(max-width:900px){.cityduck.left{left:2%;height:60vh}.cityduck.right{right:0;height:46vh}}
 @keyframes duckrise{from{opacity:0;transform:translateY(30px)}to{opacity:.92;transform:none}}
-@media (prefers-reduced-motion: reduce){.citylayer{animation:none}}
 
 /* fluid motion */
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
