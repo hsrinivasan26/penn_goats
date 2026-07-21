@@ -6,8 +6,11 @@ from .formulas import round_half_up, leisure_happiness
 
 
 def phase_happiness(state) -> None:
-    # Apply natural decay
-    h = state.happiness - config.DECAY
+    # Natural decay is exponential: a fixed fraction of CURRENT happiness (with a floor so
+    # zero stays reachable). Contentment is upkeep -- the happier you are, the more it
+    # costs to stay there, so leisure is a recurring budget line, not a one-off purchase.
+    decay = max(config.DECAY_FLOOR, round_half_up(config.DECAY_RATE * state.happiness))
+    h = state.happiness - decay
 
     debt_ratio = state.weighted_debt() / max(1, state.gross_month * 12)
     if debt_ratio > config.STRESS_LIMIT:

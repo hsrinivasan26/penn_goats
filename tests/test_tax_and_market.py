@@ -139,3 +139,26 @@ def test_halfway_milestone_tracks_the_actual_target():
     for _ in range(10):
         check_milestones(s)
     assert "halfway" in s.milestones_fired
+
+
+# ---- exponential happiness decay -------------------------------------------
+
+def test_happiness_decay_scales_with_happiness():
+    from game.happiness import phase_happiness
+    for start, expected_decay in ((50, 5), (80, 8), (100, 10), (20, 3)):  # 20 -> floor 3
+        s = new_game("A", seed=1)
+        s.happiness = start
+        phase_happiness(s)
+        assert s.happiness == start - expected_decay, f"start {start}"
+
+
+def test_neglect_still_reaches_burnout():
+    from game.happiness import phase_happiness
+    from game.enums import GameOver
+    s = new_game("A", seed=1)                     # starts at 50, no leisure ever
+    months = 0
+    while s.game_over is None and months < 40:
+        phase_happiness(s)
+        months += 1
+    assert s.game_over == GameOver.BURNOUT
+    assert months <= 25                           # the floor keeps zero reachable

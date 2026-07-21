@@ -82,13 +82,15 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:-.02em}
 .milestone .mtitle{font-family:var(--disp);font-weight:600;font-size:15px;color:#fce8b8;margin-top:3px}
 .milestone .mbonus{margin-left:auto;font-family:var(--disp);font-weight:700;font-size:15px;color:#f5b642;white-space:nowrap}
 
-/* title screen */
-.title-wrap{text-align:center;padding:46px 20px 30px}
-.title-mark{width:104px;height:auto;vertical-align:middle;filter:drop-shadow(0 10px 30px rgba(242,197,61,.30))}
-.title-word{height:56px;width:auto;vertical-align:middle;margin-left:6px;filter:drop-shadow(0 3px 12px rgba(242,197,61,.20))}
+/* title screen -- big stacked lockup filling the center, menu pushed lower */
+.title-wrap{text-align:center;padding:8vh 20px 5vh}
+.title-mark{display:block;margin:0 auto;width:152px;height:auto;
+  filter:drop-shadow(0 12px 38px rgba(242,197,61,.35))}
+.title-word{display:block;margin:18px auto 0;height:64px;width:auto;
+  filter:drop-shadow(0 3px 14px rgba(242,197,61,.22))}
 .title-brand{font-family:var(--disp);font-weight:700;font-size:44px;letter-spacing:-.03em;margin-top:6px}
 .title-brand .p{color:var(--purple)}
-.title-hook{font-family:var(--disp);font-size:16px;margin-top:8px}
+.title-hook{font-family:var(--disp);font-size:16.5px;margin-top:22px}
 .title-tag{color:var(--muted);font-size:13.5px;margin-top:4px}
 
 /* choose */

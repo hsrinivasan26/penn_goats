@@ -70,7 +70,10 @@ STRESS_WEIGHT = {
 ESSENTIALS = {"rent": 1200, "food": 400, "transport": 240, "utilities": 160}
 
 # Happiness  (rebalanced for a harder game -- see README "Balance" / consult the team)
-DECAY = 7                 # natural decay per month (was 4: happiness was too easy to hold)
+DECAY_RATE = 0.10         # EXPONENTIAL decay: each month happiness falls by 10% of itself.
+                          # 5/mo at the 50 start, 8/mo living the good life at 80 -- staying
+                          # happy is steady upkeep, and being happier costs more to maintain.
+DECAY_FLOOR = 3           # decay never drops below this, so total neglect still hits burnout
 GAIN_SCALE = 1.5          # leisure_happiness = round(1.5 * sqrt(spend))
 LEISURE_HAPPINESS_CAP = 8 # max happiness a single month of leisure can buy -- can't be binged,
                           # so recovering from a happiness hole takes several steady months
