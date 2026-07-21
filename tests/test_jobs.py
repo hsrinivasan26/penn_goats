@@ -96,3 +96,10 @@ def test_city_mascots_tease_then_fill_in():
     both = citybg.city_html(seed=3, show_win=True, show_titles=True)
     assert "mascot-win.png" in both and "mascot-alltitles.png" in both
     assert "sil" not in both
+
+
+def test_city_variants_for_quiz_backdrop():
+    import citybg
+    plain = citybg.city_html(seed=3, mascots=False, tall=True)
+    assert "cityduck" not in plain and "citybg tall" in plain    # skyline only, taller
+    assert "citybg tall" not in citybg.city_html(seed=3)         # menu stays standard

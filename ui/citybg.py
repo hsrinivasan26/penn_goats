@@ -63,9 +63,15 @@ def _mascots(show_win: bool, show_titles: bool) -> str:
             f'<img class="{rcls}" src="app/static/{right}" alt=""/>')
 
 
-def city_html(seed: int = 7, show_win: bool = False, show_titles: bool = False) -> str:
+def city_html(seed: int = 7, show_win: bool = False, show_titles: bool = False,
+              mascots: bool = True, tall: bool = False) -> str:
     """The whole backdrop: mascots (furthest), far skyline, near skyline. The buildings
-    are dark gold -- the city the player is trying to strike it rich in."""
+    are dark gold -- the city the player is trying to strike it rich in.
+
+    mascots=False renders just the skyline (used on the quiz screen, where the duck
+    unlocks would be noise); tall=True grows the layers to fill more of the viewport."""
     far = _layer(seed, "far", 120, 300, "#262012", "#3c3318", "#8f7433", 0.06, 70)
     near = _layer(seed + 1, "near", 60, 190, "#211b0e", "#393014", "#e3a93d", 0.08, 36)
-    return f'<div class="citybg">{_mascots(show_win, show_titles)}{far}{near}</div>'
+    ducks = _mascots(show_win, show_titles) if mascots else ""
+    cls = "citybg tall" if tall else "citybg"
+    return f'<div class="{cls}">{ducks}{far}{near}</div>'

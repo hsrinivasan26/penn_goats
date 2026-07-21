@@ -183,6 +183,8 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:-.02em}
   animation-name:cityscroll;animation-timing-function:linear;animation-iteration-count:infinite}
 .citylayer.far{height:34vh}
 .citylayer.near{height:21vh}
+.citybg.tall .citylayer.far{height:48vh;opacity:.85}
+.citybg.tall .citylayer.near{height:30vh}
 .citylayer svg{display:block;height:100%}
 @keyframes cityscroll{to{transform:translateX(-1600px)}}
 .cityduck{position:absolute;bottom:8vh;width:auto;opacity:.92;

@@ -380,9 +380,14 @@ def screen_play():
         st.write("")
         bc = st.columns([1.2, 1.6, 2.2])
         taken = ss.get("quiz_taken_for") == s.turn
-        if bc[1].button("💼 Work done for this month" if taken else "💼 Do your job — money quiz",
-                        disabled=taken, use_container_width=True,
-                        help="Your month's work. Pass (65%) to log a month of experience. "
+        jobless = not s.employed
+        qlabel = ("💼 No job this month" if jobless
+                  else "💼 Work done for this month" if taken
+                  else "💼 Do your job — money quiz")
+        if bc[1].button(qlabel, disabled=taken or jobless, use_container_width=True,
+                        help="No work without a job — take a role in Job & moves first."
+                             if jobless else
+                             "Your month's work. Pass (65%) to log a month of experience. "
                              "One shot per month."):
             ss.quiz = None
             ss.quiz_day = s.turn                    # topic rotates with the month
@@ -527,6 +532,10 @@ def _start_quiz():
 def screen_quiz():
     if ss.get("state") is None or ss.state.game_over is not None:
         go("title"); st.rerun()         # the quiz only exists inside a running game now
+    if not ss.state.employed and ss.get("quiz") is None:
+        go("play"); st.rerun()          # no job, no work: the quiz is gated on employment
+    st.markdown(citybg.city_html(seed=ss.get("city_seed", 7), mascots=False, tall=True),
+                unsafe_allow_html=True)
     q = ss.get("quiz")
 
     # start view
