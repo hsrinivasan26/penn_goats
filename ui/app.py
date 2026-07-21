@@ -80,7 +80,10 @@ def start_game(path):
 def screen_title():
     if "city_seed" not in ss:
         ss.city_seed = random.randint(0, 999_999)      # a new skyline every session
-    st.markdown(citybg.city_html(seed=ss.city_seed, won=ss.get("mascot_won", False)),
+    all_title_ids = {t["id"] for t in titles.TITLES}
+    st.markdown(citybg.city_html(seed=ss.city_seed,
+                                 show_win=ss.get("mascot_won", False),
+                                 show_titles=all_title_ids <= ss.earned_titles),
                 unsafe_allow_html=True)
     st.markdown(
         "<div class='title-wrap'>"

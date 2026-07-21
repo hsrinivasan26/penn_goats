@@ -1,11 +1,11 @@
 """Procedural title-screen backdrop.
 
-A city skyline is generated from a seed (no images), rendered as two parallax layers of
-dark-gold buildings that scroll forever behind the menu. The mascot looms behind the city
-as a dark silhouette; once the player has won a run this session, it fills in gold.
-(The final win-reveal treatment is TBD -- the team has a design coming.)
+A city skyline is generated from a seed, rendered as two parallax layers of dark-gold
+buildings that scroll forever behind the menu. The mascot ducks tower over the city from
+behind as black silhouettes, unlocking as the player achieves things: win a run and the
+right duck appears; earn every title and the gold-top-hat duck joins on the left.
 
-Pure string-building: city_html(seed, won) -> HTML for one st.markdown call.
+Pure string-building: city_html(seed, show_win, show_titles) -> HTML for one st.markdown call.
 """
 
 import random
@@ -50,37 +50,22 @@ def _layer(seed: int, cls: str, h_lo: int, h_hi: int, body: str, win_dim: str,
             f'{svg}{svg}</div>')
 
 
-def _goat(won: bool) -> str:
-    """The mascot as grouped primitives (side profile, facing right). Same shapes serve as
-    the dark silhouette and the gold win fill."""
-    shapes = (
-        '<ellipse cx="245" cy="340" rx="158" ry="92"/>'                       # body
-        '<polygon points="318,290 362,196 418,208 372,330"/>'                 # neck (short, thick)
-        '<ellipse cx="402" cy="196" rx="52" ry="36"/>'                        # head
-        '<polygon points="438,182 498,204 440,218"/>'                         # muzzle
-        '<polygon points="416,226 424,270 442,228"/>'                         # beard
-        '<ellipse cx="362" cy="176" rx="21" ry="10" transform="rotate(-18 362 176)"/>'  # ear
-        '<path d="M392,166 C382,96 316,62 264,76" fill="none" stroke-width="17" stroke-linecap="round"/>'
-        '<path d="M412,162 C414,84 352,38 294,46" fill="none" stroke-width="14" stroke-linecap="round"/>'
-        '<polygon points="108,306 70,270 114,284"/>'                          # tail
-        '<polygon points="318,398 342,398 352,472 328,472"/>'                 # legs
-        '<polygon points="266,414 290,414 292,472 270,472"/>'
-        '<polygon points="196,414 220,414 216,472 194,472"/>'
-        '<polygon points="146,398 170,398 158,472 136,472"/>'
-    )
-    if won:
-        return (f'<svg class="citymascot won" viewBox="0 0 520 500">'
-                f'<defs><linearGradient id="chgold" x1="0" y1="0" x2="0" y2="1">'
-                f'<stop offset="0" stop-color="#f7d97c"/><stop offset="1" stop-color="#b8862e"/>'
-                f'</linearGradient></defs>'
-                f'<g fill="url(#chgold)" stroke="url(#chgold)">{shapes}</g></svg>')
-    return (f'<svg class="citymascot" viewBox="0 0 520 500">'
-            f'<g fill="#15120b" stroke="#15120b">{shapes}</g></svg>')
+def _mascots(show_win: bool, show_titles: bool) -> str:
+    """The mascot ducks, towering over the city from behind, filling the flanks of the
+    menu. Black silhouettes (asset alpha untouched) that appear as they're unlocked:
+    the right duck after the first win, the left (gold-top-hat) duck once every title
+    is earned. Colored versions live next to the silhouettes in ui/static for later."""
+    out = []
+    if show_titles:
+        out.append('<img class="cityduck left" src="app/static/mascot-alltitles-sil.png" alt=""/>')
+    if show_win:
+        out.append('<img class="cityduck right" src="app/static/mascot-win-sil.png" alt=""/>')
+    return "".join(out)
 
 
-def city_html(seed: int = 7, won: bool = False) -> str:
-    """The whole backdrop: mascot (furthest), far skyline, near skyline. The buildings are
-    dark gold -- the city the player is trying to strike it rich in."""
+def city_html(seed: int = 7, show_win: bool = False, show_titles: bool = False) -> str:
+    """The whole backdrop: mascots (furthest), far skyline, near skyline. The buildings
+    are dark gold -- the city the player is trying to strike it rich in."""
     far = _layer(seed, "far", 120, 300, "#3a3118", "#584a20", "#c9a54a", 0.06, 90)
     near = _layer(seed + 1, "near", 60, 190, "#241d0e", "#403414", "#f5b642", 0.08, 48)
-    return f'<div class="citybg">{_goat(won)}{far}{near}</div>'
+    return f'<div class="citybg">{_mascots(show_win, show_titles)}{far}{near}</div>'

@@ -83,3 +83,13 @@ def test_ages_track_birthdays_and_goal():
     assert jobs.age_at("A", 13) == 19                 # birthday at the year mark
     assert jobs.age_at("A", 60) == 22
     assert jobs.goal_age("A") == 23 and jobs.goal_age("B") == 27
+
+
+def test_city_mascots_unlock_by_flag():
+    import citybg
+    locked = citybg.city_html(seed=3)
+    assert "mascot-" not in locked                          # nothing until you earn it
+    won = citybg.city_html(seed=3, show_win=True)
+    assert "mascot-win-sil.png" in won and "alltitles" not in won
+    both = citybg.city_html(seed=3, show_win=True, show_titles=True)
+    assert "mascot-win-sil.png" in both and "mascot-alltitles-sil.png" in both

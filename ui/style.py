@@ -183,9 +183,13 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:-.02em}
 .citylayer.near{height:21vh;opacity:.9}
 .citylayer svg{display:block;height:100%}
 @keyframes cityscroll{to{transform:translateX(-1600px)}}
-.citymascot{position:absolute;left:50%;bottom:5vh;transform:translateX(-50%);
-  width:min(56vh,78vw);height:auto;opacity:.85}
-.citymascot.won{filter:drop-shadow(0 0 34px rgba(245,182,66,.35))}
+.cityduck{position:absolute;bottom:8vh;width:auto;opacity:.92;
+  filter:drop-shadow(0 0 26px rgba(245,182,66,.22)) drop-shadow(0 0 3px rgba(245,182,66,.30));
+  animation:duckrise 1.2s ease both}
+.cityduck.left{left:9%;height:74vh}
+.cityduck.right{right:7%;height:58vh}
+@media(max-width:900px){.cityduck.left{left:2%;height:60vh}.cityduck.right{right:1%;height:46vh}}
+@keyframes duckrise{from{opacity:0;transform:translateY(30px)}to{opacity:.92;transform:none}}
 @media (prefers-reduced-motion: reduce){.citylayer{animation:none}}
 
 /* fluid motion */
