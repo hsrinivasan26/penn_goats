@@ -197,9 +197,13 @@ def dlg_leisure():
     if int(s.cash) <= 0:
         st.caption("No cash for fun right now."); return
     amt = _amount_slider("Spend on fun ($)", s.cash, min(40, int(s.cash)), "dl_amt")
-    st.markdown(f"<div class='hpreview'>Happiness this month <b>+{leisure_happiness(int(amt))}</b></div>",
+    cur = min(config.LEISURE_HAPPINESS_CAP, leisure_happiness(int(s.leisure_spend)))
+    new = min(config.LEISURE_HAPPINESS_CAP, leisure_happiness(int(s.leisure_spend) + int(amt)))
+    st.markdown(f"<div class='hpreview'>Happiness — right away <b>+{new - cur}</b></div>",
                 unsafe_allow_html=True)
-    st.caption(f"{render.money(int(s.cash) - int(amt))} cash left.")
+    at_cap = new - cur == 0 and int(amt) > 0
+    st.caption(("This month's fun is maxed out — more spending won't lift you further. " if at_cap else "")
+               + f"{render.money(int(s.cash) - int(amt))} cash left.")
     if st.button(f"Spend {render.money(amt)}", type="primary", disabled=amt <= 0, use_container_width=True):
         choices.leisure(s, int(amt)); st.rerun()
 

@@ -170,11 +170,30 @@ def test_spending_on_leisure_resets_the_spiral():
     s.reset_scratch()
     s.cash = 1_000
     choices.leisure(s, 40)                        # any fun this month resets it
-    before = s.happiness
+    after_spend = s.happiness
     phase_happiness(s)
     assert s.months_without_leisure == 0
-    gain = min(config.LEISURE_HAPPINESS_CAP, 9)   # 1.5*sqrt(40) ~ 9 -> capped at 8
-    assert before - s.happiness == config.DECAY_BASE - gain
+    assert after_spend - s.happiness == config.DECAY_BASE   # month-end only applies decay
+
+
+def test_leisure_lifts_happiness_the_moment_you_spend():
+    from game import choices
+    s = new_game("A", seed=1)
+    s.cash, s.happiness = 1_000, 50
+    assert choices.leisure(s, 40) is True         # 1.5*sqrt(40) ~ 9 -> capped at 8
+    assert s.happiness == 58                      # instantly, before any phase runs
+    # a second treat the same month respects the monthly cap (diff application)
+    assert choices.leisure(s, 400) is True
+    assert s.happiness == 58                      # cap 8 already fully used
+    assert s.leisure_spend == 440
+
+
+def test_instant_leisure_gain_clamps_at_100():
+    from game import choices
+    s = new_game("A", seed=1)
+    s.cash, s.happiness = 1_000, 97
+    choices.leisure(s, 40)
+    assert s.happiness == 100
 
 
 def test_total_neglect_burns_out_within_months():

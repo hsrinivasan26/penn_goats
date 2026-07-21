@@ -2,7 +2,7 @@
 
 import config
 from .enums import GameOver
-from .formulas import round_half_up, leisure_happiness
+from .formulas import round_half_up
 
 
 def phase_happiness(state) -> None:
@@ -24,9 +24,9 @@ def phase_happiness(state) -> None:
     if state.shortfall_flag:
         h -= config.SHORTFALL_PENALTY
 
-    # Leisure lifts mood, but only up to a monthly cap -- you can't binge-buy happiness back,
-    # so a dip takes several steady months (and money) to climb out of.
-    h += min(config.LEISURE_HAPPINESS_CAP, leisure_happiness(state.leisure_spend))
+    # Leisure's happiness gain was already applied the moment the player spent (see
+    # choices.leisure -- capped there, so the UI responds instantly). Here we only add
+    # the event/milestone effects.
     h += state.event_happiness_delta + state.milestone_bonus
 
     state.happiness = max(0, min(100, round_half_up(h)))
