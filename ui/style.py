@@ -82,13 +82,15 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:-.02em}
 .milestone .mtitle{font-family:var(--disp);font-weight:600;font-size:15px;color:#fce8b8;margin-top:3px}
 .milestone .mbonus{margin-left:auto;font-family:var(--disp);font-weight:700;font-size:15px;color:#f5b642;white-space:nowrap}
 
-/* title screen */
-.title-wrap{text-align:center;padding:46px 20px 30px}
-.title-mark{width:104px;height:auto;vertical-align:middle;filter:drop-shadow(0 10px 30px rgba(242,197,61,.30))}
-.title-word{height:56px;width:auto;vertical-align:middle;margin-left:6px;filter:drop-shadow(0 3px 12px rgba(242,197,61,.20))}
+/* title screen -- big stacked lockup filling the center, menu pushed lower */
+.title-wrap{text-align:center;padding:8vh 20px 5vh}
+.title-mark{display:block;margin:0 auto;width:152px;height:auto;
+  filter:drop-shadow(0 12px 38px rgba(242,197,61,.35))}
+.title-word{display:block;margin:18px auto 0;height:64px;width:auto;
+  filter:drop-shadow(0 3px 14px rgba(242,197,61,.22))}
 .title-brand{font-family:var(--disp);font-weight:700;font-size:44px;letter-spacing:-.03em;margin-top:6px}
 .title-brand .p{color:var(--purple)}
-.title-hook{font-family:var(--disp);font-size:16px;margin-top:8px}
+.title-hook{font-family:var(--disp);font-size:16.5px;margin-top:22px}
 .title-tag{color:var(--muted);font-size:13.5px;margin-top:4px}
 
 /* choose */
@@ -100,12 +102,18 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:-.02em}
 .pstat .sl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .pstat .sv{font-family:var(--disp);font-weight:600;font-size:15px;margin-top:2px;font-variant-numeric:tabular-nums}
 
-/* money quiz */
-.qopt{border:1px solid var(--border);border-radius:10px;padding:9px 12px;margin:5px 0;font-size:13.5px}
+/* money quiz -- big type, the quiz should fill the page */
+.qmeta{font-size:15px;color:var(--muted);margin:4px 0 10px}
+.qstem{font-family:var(--disp);font-weight:650;font-size:23px;line-height:1.35;
+  max-width:820px;margin:2px 0 14px}
+[data-testid="stRadio"] label p{font-size:18.5px !important;line-height:1.45}
+[data-testid="stRadio"] [role="radiogroup"]{gap:10px}
+[data-testid="stRadio"] > label p{font-size:15px !important;color:var(--muted)}
+.qopt{border:1px solid var(--border);border-radius:12px;padding:13px 16px;margin:7px 0;font-size:17.5px}
 .qopt.qgood{border-color:#2f6f4f;background:#0f1f19;color:#34d399;font-weight:600}
 .qopt.qbad{border-color:#5a2b2b;background:#241416;color:#fb7185;font-weight:600}
-.qexpl{margin-top:12px;font-size:13px;color:var(--muted);background:var(--inset);
-  border:1px solid var(--border);border-radius:10px;padding:11px 13px;line-height:1.5}
+.qexpl{margin-top:14px;font-size:16px;color:var(--muted);background:var(--inset);
+  border:1px solid var(--border);border-radius:12px;padding:14px 16px;line-height:1.55;max-width:820px}
 
 /* how to play */
 .steps{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:6px}
@@ -171,6 +179,28 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:-.02em}
 .billrow .bout{color:#e6a2a2;font-variant-numeric:tabular-nums}
 .billsep{height:1px;background:var(--border);margin:7px 0}
 .billshort{margin-top:9px;color:#f3b0b0;font-size:12px;background:#241416;border:1px solid #5a2b2b;border-radius:10px;padding:8px 11px}
+.btax-good{color:var(--cash);font-weight:700}
+.btax-bad{color:#ef4444;font-weight:700}
+
+/* title backdrop: procedural scrolling city + mascot silhouette */
+.citybg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.block-container{position:relative;z-index:1}
+.citylayer{position:absolute;bottom:0;left:0;display:flex;width:max-content;
+  animation-name:cityscroll;animation-timing-function:linear;animation-iteration-count:infinite}
+.citylayer.far{height:34vh}
+.citylayer.near{height:21vh}
+.citybg.tall .citylayer.far{height:48vh;opacity:.85}
+.citybg.tall .citylayer.near{height:30vh}
+.citylayer svg{display:block;height:100%}
+@keyframes cityscroll{to{transform:translateX(-1600px)}}
+.cityduck{position:absolute;bottom:8vh;width:auto;opacity:.92;
+  filter:drop-shadow(0 0 26px rgba(245,182,66,.22)) drop-shadow(0 0 3px rgba(245,182,66,.30));
+  animation:duckrise 1.2s ease both}
+.cityduck.left{left:9%;height:74vh}
+.cityduck.right{right:3%;height:58vh}
+.cityduck.earned{opacity:1;filter:drop-shadow(0 0 34px rgba(245,182,66,.45)) drop-shadow(0 0 5px rgba(245,182,66,.5))}
+@media(max-width:900px){.cityduck.left{left:2%;height:60vh}.cityduck.right{right:0;height:46vh}}
+@keyframes duckrise{from{opacity:0;transform:translateY(30px)}to{opacity:.92;transform:none}}
 
 /* fluid motion */
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}

@@ -49,9 +49,39 @@ def cap_gains_tax(gain: int) -> int:
     return round_half_up(gain * config.CAP_GAINS_RATE) if gain > 0 else 0
 
 
+def federal_tax(taxable: int) -> int:
+    """Progressive federal tax on taxable income (marginal brackets from config)."""
+    owed, lower = 0.0, 0
+    for cap, rate in config.FED_BRACKETS:
+        upper = taxable if cap is None else min(taxable, cap)
+        if upper > lower:
+            owed += (upper - lower) * rate
+        if cap is not None and taxable <= cap:
+            break
+        lower = cap if cap is not None else lower
+    return round_half_up(owed)
+
+
+def tax_breakdown(annual_gross: int, withheld_ytd: int) -> dict:
+    """The full year-end income-tax picture, itemized so the UI can show every step.
+
+    Liability = progressive federal tax on (gross - standard deduction) + flat state tax.
+    reconciliation > 0 means you owe; < 0 means a refund. Capital gains are handled
+    separately by the caller (they were never withheld, so they add straight to the bill).
+    """
+    taxable = max(0, annual_gross - config.STD_DEDUCTION)
+    fed = federal_tax(taxable)
+    state_tax = round_half_up(annual_gross * config.STATE_RATE)
+    liability = fed + state_tax
+    return {"gross": annual_gross, "deduction": min(annual_gross, config.STD_DEDUCTION),
+            "taxable": taxable, "federal": fed, "state": state_tax,
+            "liability": liability, "withheld": withheld_ytd,
+            "reconciliation": liability - withheld_ytd}
+
+
 def annual_reconciliation(annual_gross: int, withheld_ytd: int) -> int:
     """Year-end income-tax truing-up: positive = you owe, negative = refund."""
-    return round_half_up(annual_gross * config.INCOME_TAX_RATE) - withheld_ytd
+    return tax_breakdown(annual_gross, withheld_ytd)["reconciliation"]
 
 
 def leisure_happiness(spend: int) -> int:

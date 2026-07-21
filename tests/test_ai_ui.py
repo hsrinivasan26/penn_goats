@@ -38,7 +38,7 @@ def _finished_state(outcome="win", cash=70_000):
 def test_coach_fallback_without_generator_or_key(monkeypatch):
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     text, is_ai = coach.overview(_finished_state("win"), "win")
-    assert is_ai is False and "buffer" in text
+    assert is_ai is False and "head start" in text
 
 
 def test_coach_uses_generator_output():
@@ -174,3 +174,19 @@ def test_buying_a_house_earns_the_homeowner_title():
     assert choices.buy_house(s, price=200_000, down=20_000) is True
     assert s.housing.value == "own"
     assert "homeowner" in titles.earned_ids(s)      # previously unreachable
+
+
+# ---- LaTeX / markdown sanitizing of model output ---------------------------
+
+def test_md_safe_defuses_dollar_math_and_latex():
+    import render
+    assert render.md_safe("You have $500 and spend $300") == "You have \\$500 and spend \\$300"
+    out = render.md_safe(r"\(15\% \times \$1{,}000\) is \frac{a}{b}")
+    assert "\\(" not in out and "\\frac" not in out
+
+
+def test_html_safe_neutralizes_tags_and_latex():
+    import render
+    out = render.html_safe('<b>bold</b> \\[x\\] costs $150')
+    assert "<b>" not in out and "&lt;b&gt;" in out
+    assert "\\[" not in out and "$150" in out

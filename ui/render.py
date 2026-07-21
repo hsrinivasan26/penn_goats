@@ -1,6 +1,27 @@
 """HTML render helpers -- turn game state into markup for st.markdown(unsafe_allow_html=True)."""
 
+import html as _html
+import re as _re
+
 import config
+
+# Model output (Gemini) sometimes contains LaTeX delimiters, and any two $ amounts in one
+# markdown string become accidental KaTeX math. All model text passes through one of these
+# before display.
+_LATEX_DELIMS = _re.compile(r"\\\(|\\\)|\\\[|\\\]|\$\$|\\text\{|\\frac|\\times|\\cdot")
+
+
+def md_safe(text) -> str:
+    """Model text -> safe for a pure-markdown render (st.markdown / st.radio labels).
+    Strips LaTeX constructs and escapes $ so dollar pairs never render as math."""
+    t = _LATEX_DELIMS.sub(" ", str(text or ""))
+    return t.replace("$", "\\$")
+
+
+def html_safe(text) -> str:
+    """Model text -> safe to interpolate into our raw-HTML blocks (tags neutralized,
+    LaTeX stripped; $ is fine inside raw HTML)."""
+    return _html.escape(_LATEX_DELIMS.sub(" ", str(text or "")))
 
 
 # --- formatting ---
@@ -76,7 +97,7 @@ def rings_html(state) -> str:
         _ring(kmoney(liab), liab / annual, "#ef4444", "Debt",
               f"<div class='tt'>Debt · {money(liab)}</div><p>What you owe. Interest is added each month.</p>"),
         _ring(str(state.happiness), state.happiness / 100, happiness_color(state.happiness), "Happiness",
-              "<div class='tt'>Happiness</div><p>Falls a little each month. At 0 you burn out (a loss).</p>"),
+              "<div class='tt'>Happiness</div><p>Falls faster the longer you skip fun — spending resets it. At 0 you burn out.</p>"),
     ])
     nwc = "#34d399" if nw >= 0 else "#ef4444"
     return (f'<div class="rail"><div class="railcap">Your standing</div>{rings}'
@@ -122,6 +143,11 @@ def bill_html(state, month) -> str:
         money_in.append(("Take-home pay", net))
     if ev_cash > 0:
         money_in.append((event["label"], ev_cash))
+    if tax and tax.get("refund"):
+        money_in.append(("Tax refund", int(tax["refund"])))
+    gap = int(event.get("gap", 0)) if event else 0
+    if gap > 0:
+        money_in.append(("Covered by credit card (24% APR)", gap))
 
     housing_label = "Mortgage" if state.housing == "own" else "Rent"
     money_out = [(housing_label, int(bill.get("housing", 0))),
@@ -166,6 +192,44 @@ def milestone_html(m) -> str:
             f'<div class="mbonus">+{m["bonus"]} happiness</div></div>')
 
 
+# --- year-end tax statement (the full math, no black box) ---
+
+def tax_html(t) -> str:
+    recon = int(t.get("reconciliation", 0))
+    refund = int(t.get("refund", 0))
+    cap = int(t.get("capital_gains", 0))
+    if refund:
+        head = f"Tax refund <span class='btax-good'>+{money(refund)}</span>"
+    elif recon > 0:
+        head = f"You owed <span class='btax-bad'>{money(recon)}</span> at year-end"
+    else:
+        head = "Year-end taxes settled"
+    if cap:
+        head += f" &nbsp;·&nbsp; capital gains {money(cap)}"
+
+    def row(label, val, cls=""):
+        return f"<div class='billrow'><span>{label}</span><span class='{cls}'>{val}</span></div>"
+
+    rows = (
+        row("Total pay this year", money(int(t.get('gross', 0)))) +
+        row("Standard deduction", "−" + money(int(t.get('deduction', 0))), "bout") +
+        row("Taxable income", money(int(t.get('taxable', 0)))) +
+        "<div class='billsep'></div>" +
+        row("Federal tax (bracket by bracket)", money(int(t.get('federal', 0)))) +
+        row(f"State tax ({config.STATE_RATE * 100:.0f}% flat)", money(int(t.get('state', 0)))) +
+        row("True tax for the year", money(int(t.get('liability', 0)))) +
+        row("Already withheld from paychecks", "−" + money(int(t.get('withheld', 0))), "bin") +
+        (row("Capital gains tax (never withheld)", "+" + money(cap), "bout") if cap else "") +
+        "<div class='billsep'></div>" +
+        (row("Refund paid to you", "+" + money(refund), "bin") if refund
+         else row("Balance due", money(max(0, recon) + cap), "bout")) +
+        (row("Still owed (couldn't cover it all)", money(int(t.get('still_owed', 0))), "bout")
+         if t.get("still_owed") else "")
+    )
+    return (f"<details class='bill'><summary class='billcap'>Year-end taxes — the math"
+            f"<span class='billtot' style='font-size:12.5px'>{head}</span></summary>{rows}</details>")
+
+
 # --- this-month events ---
 
 def event_html(payload) -> str:
@@ -178,9 +242,12 @@ def event_html(payload) -> str:
     if bill and bill.get("shortfall"):
         parts.append(f'<div class="shortfall">&#9888; Short by {money(bill["gap"])} on essentials '
                      f'— the gap was borrowed onto a credit card (24% APR).</div>')
+    crash = (payload.get("markets") or {}).get("crypto")
+    if crash is not None and crash <= -0.30:
+        parts.append(f'<div class="event ev-neg"><span class="lab">Market crash</span>'
+                     f'<div class="etitle">Crypto crashed {crash * 100:.0f}% this month</div></div>')
     if tax:
-        parts.append(f'<div class="taxline">Year-end taxes: paid {money(tax["paid"])}'
-                     + (f', still owed {money(tax["still_owed"])}' if tax["still_owed"] else '') + '.</div>')
+        parts.append(tax_html(tax))
     if event:
         if event["cash_delta"]:
             detail = money(event["cash_delta"])

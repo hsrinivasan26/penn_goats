@@ -4,7 +4,7 @@ Team PENN GOATS Research and Design project for Glassman Penn Scholars 2026.
 
 **Chryseos** is a free, browser-based financial-literacy game. You start with your
 first real paycheck and get five in-game years to go from broke new hire to a real
-savings buffer — learning about take-home pay, taxes, investing, debt, and the
+financial head start — learning about take-home pay, taxes, investing, debt, and the
 work–life balance that keeps you from burning out along the way.
 
 ## Run the demo

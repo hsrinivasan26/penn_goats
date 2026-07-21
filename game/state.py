@@ -49,6 +49,11 @@ class GameState:
     transport: int = 0
     utilities: int = 0
 
+    # happiness neglect spiral: consecutive months with zero leisure spending. Grows the
+    # decay exponentially (config.DECAY_GROWTH); any leisure spend resets it. Persists
+    # across turns (NOT scratch).
+    months_without_leisure: int = 0
+
     # per-turn scratch (reset every turn)
     shortfall_flag: bool = False
     leisure_spend: int = 0

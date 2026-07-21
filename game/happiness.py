@@ -2,12 +2,21 @@
 
 import config
 from .enums import GameOver
-from .formulas import round_half_up, leisure_happiness
+from .formulas import round_half_up
 
 
 def phase_happiness(state) -> None:
-    # Apply natural decay
-    h = state.happiness - config.DECAY
+    # Decay accelerates the longer the player holds off on leisure: base the month you
+    # treat yourself, multiplied for every consecutive month you don't. Spending anything
+    # on fun resets the spiral, so happiness is a recurring budget line you can't defer
+    # for long.
+    if state.leisure_spend > 0:
+        state.months_without_leisure = 0
+    decay = min(config.DECAY_MAX,
+                round_half_up(config.DECAY_BASE * config.DECAY_GROWTH ** state.months_without_leisure))
+    if state.leisure_spend == 0:
+        state.months_without_leisure += 1
+    h = state.happiness - decay
 
     debt_ratio = state.weighted_debt() / max(1, state.gross_month * 12)
     if debt_ratio > config.STRESS_LIMIT:
@@ -15,9 +24,9 @@ def phase_happiness(state) -> None:
     if state.shortfall_flag:
         h -= config.SHORTFALL_PENALTY
 
-    # Leisure lifts mood, but only up to a monthly cap -- you can't binge-buy happiness back,
-    # so a dip takes several steady months (and money) to climb out of.
-    h += min(config.LEISURE_HAPPINESS_CAP, leisure_happiness(state.leisure_spend))
+    # Leisure's happiness gain was already applied the moment the player spent (see
+    # choices.leisure -- capped there, so the UI responds instantly). Here we only add
+    # the event/milestone effects.
     h += state.event_happiness_delta + state.milestone_bonus
 
     state.happiness = max(0, min(100, round_half_up(h)))

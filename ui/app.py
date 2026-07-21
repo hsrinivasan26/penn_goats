@@ -22,6 +22,7 @@ import config
 from game.state import new_game
 from game.rng import SeededRNG
 from game.formulas import leisure_happiness, amortize, capital_gain, cap_gains_tax
+from game.enums import AssetClass, DebtKind
 from game import choices
 from game import mcq
 
@@ -32,6 +33,7 @@ import titles
 import coach
 import quiz
 import jobs
+import citybg
 
 from PIL import Image as _Image
 st.set_page_config(
@@ -47,8 +49,10 @@ if "earned_titles" not in ss:
     ss.earned_titles = set()
 
 PATH_META = {
-    "A": {"name": "Starting from scratch", "desc": "No degree, no debt. Lower pay, but a clean slate."},
-    "B": {"name": "Fresh graduate", "desc": "A degree and a bigger paycheck — and a $30k loan to dig out of."},
+    "A": {"name": "Starting from scratch",
+          "desc": "18, straight out of high school. No degree, no debt — lower pay, but a clean slate."},
+    "B": {"name": "Fresh graduate",
+          "desc": "22, degree in hand and a bigger paycheck — plus a $30k loan to dig out of."},
 }
 
 
@@ -64,7 +68,6 @@ def start_game(path):
     ss.last_milestone = None
     ss.months_worked = 0
     ss.job_title = jobs.START_TITLE.get(path)
-    ss.quiz_credit = 0                  # study credit earned by passing monthly quizzes
     ss.quiz_taken_for = None            # turn number of this month's attempt (one per month)
     ss.quiz = None
     go("play")
@@ -75,6 +78,13 @@ def start_game(path):
 # --------------------------------------------------------------------------
 
 def screen_title():
+    if "city_seed" not in ss:
+        ss.city_seed = random.randint(0, 999_999)      # a new skyline every session
+    all_title_ids = {t["id"] for t in titles.TITLES}
+    st.markdown(citybg.city_html(seed=ss.city_seed,
+                                 show_win=ss.get("mascot_won", False),
+                                 show_titles=all_title_ids <= ss.earned_titles),
+                unsafe_allow_html=True)
     st.markdown(
         "<div class='title-wrap'>"
         "<img class='title-mark' src='app/static/logo-mark.png' alt='Chryseos'/>"
@@ -88,9 +98,6 @@ def screen_title():
             go("choose"); st.rerun()
         if st.button("How to play", use_container_width=True):
             go("howto"); st.rerun()
-        if st.button("Money quiz", use_container_width=True):
-            ss.quiz = None; ss.quiz_home = "title"
-            go("quiz"); st.rerun()
         if st.button("Titles", use_container_width=True):
             go("titles"); st.rerun()
 
@@ -110,10 +117,12 @@ def screen_choose():
               <div class='pn'>{meta['name']}</div>
               <div class='pd'>{meta['desc']}</div>
               <div class='pstats'>
+                <div class='pstat'><div class='sl'>Starting age</div><div class='sv'>{jobs.START_AGE[key]}</div></div>
                 <div class='pstat'><div class='sl'>Pay / mo</div><div class='sv'>{render.money(cfg['gross_month'])}</div></div>
                 <div class='pstat'><div class='sl'>Debt</div><div class='sv'>{render.money(debt)}</div></div>
                 <div class='pstat'><div class='sl'>Cash</div><div class='sv'>{render.money(cfg['cash'])}</div></div>
-                <div class='pstat'><div class='sl'>Goal</div><div class='sv'>{render.money(cfg.get('target', config.TARGET))}</div></div>
+                <div class='pstat' style='grid-column:1 / -1'><div class='sl'>Goal</div>
+                  <div class='sv'>{render.money(cfg.get('target', config.TARGET))} by age {jobs.goal_age(key, config.TURN_LIMIT)}</div></div>
               </div></div>""", unsafe_allow_html=True)
             if st.button("Start this life", key=f"start_{key}", type="primary", use_container_width=True):
                 start_game(key); st.rerun()
@@ -130,7 +139,7 @@ def screen_choose():
 ASSET_DESC = {
     "index":    "≈ 0.7%/mo · steady",
     "growth":   "≈ 1.2%/mo · bigger swings",
-    "crypto":   "≈ 2%/mo · very high risk",
+    "crypto":   "≈ 1.2%/mo · wild swings, and it can crash hard",
     "riskfree": "≈ 0.3%/mo · never loses",
 }
 
@@ -188,9 +197,13 @@ def dlg_leisure():
     if int(s.cash) <= 0:
         st.caption("No cash for fun right now."); return
     amt = _amount_slider("Spend on fun ($)", s.cash, min(40, int(s.cash)), "dl_amt")
-    st.markdown(f"<div class='hpreview'>Happiness this month <b>+{leisure_happiness(int(amt))}</b></div>",
+    cur = min(config.LEISURE_HAPPINESS_CAP, leisure_happiness(int(s.leisure_spend)))
+    new = min(config.LEISURE_HAPPINESS_CAP, leisure_happiness(int(s.leisure_spend) + int(amt)))
+    st.markdown(f"<div class='hpreview'>Happiness — right away <b>+{new - cur}</b></div>",
                 unsafe_allow_html=True)
-    st.caption(f"{render.money(int(s.cash) - int(amt))} cash left.")
+    at_cap = new - cur == 0 and int(amt) > 0
+    st.caption(("This month's fun is maxed out — more spending won't lift you further. " if at_cap else "")
+               + f"{render.money(int(s.cash) - int(amt))} cash left.")
     if st.button(f"Spend {render.money(amt)}", type="primary", disabled=amt <= 0, use_container_width=True):
         choices.leisure(s, int(amt)); st.rerun()
 
@@ -223,13 +236,12 @@ def dlg_paydebt():
 def dlg_jobmoves():
     s = ss.state
     _cash_line(s)
-    credit = min(ss.get("quiz_credit", 0), jobs.QUIZ_CREDIT_CAP)
-    exp = jobs.total_experience(ss.get("months_worked", 0), credit)
+    exp = ss.get("months_worked", 0)
     if s.employed:
         cur = ss.get("job_title") or jobs.title_for_gross(int(s.gross_month)) or "Current role"
-        study = f" (incl. {credit} from quizzes)" if credit else ""
         st.markdown(f"**Your job** — {cur} · {render.money(int(s.gross_month))}/mo "
-                    f"&nbsp;·&nbsp; {exp} months' experience{study}")
+                    f"&nbsp;·&nbsp; {exp} month{'s' if exp != 1 else ''} of experience")
+        st.caption("Pass the monthly money quiz to log a month of experience.")
     else:
         st.markdown("**You're between jobs** — take a role below to start earning again.")
     offers = sorted(jobs.offerings(s.path, exp), key=lambda j: -j["gross"])
@@ -293,11 +305,64 @@ def _actions(s):
             dlg()
 
 
+_SELL_ORDER = [AssetClass.RISKFREE, AssetClass.INDEX, AssetClass.GROWTH, AssetClass.CRYPTO]
+
+
+def _sell_to_cover(s, amount):
+    """Sell investments (safest first) to raise `amount`, then pay it off the credit card.
+    Capital-gains tax on the sales accrues to year-end as usual."""
+    remaining = int(amount)
+    for cls in _SELL_ORDER:
+        if remaining <= 0:
+            break
+        bal = int(s.investments.get(cls, 0))
+        if bal > 0:
+            take = min(bal, remaining)
+            if choices.sell(s, take, cls):
+                remaining -= take
+    card = s.liabilities.get(DebtKind.CREDIT_CARD)
+    if card and card["principal"] > 0:
+        choices.pay_debt(s, min(int(s.cash), int(amount), int(card["principal"])),
+                         DebtKind.CREDIT_CARD)
+
+
+def _gap_choice(s):
+    """When a surprise cost outran cash, the player decides how to cover it: eat the 24%
+    card debt, or realize investments now (and owe capital gains in April)."""
+    ev = (ss.month or {}).get("event")
+    gap = int(ev.get("gap", 0)) if ev else 0
+    if gap <= 0 or ss.get("gap_offered_for") == s.turn:
+        return
+    card = s.liabilities.get(DebtKind.CREDIT_CARD)
+    sellable = sum(int(v) for k, v in s.investments.items()
+                   if k != AssetClass.HOME and int(v) > 0)
+    if not card or card["principal"] <= 0:
+        return
+    st.markdown(f"<div class='amsg'>That surprise outran your cash — <b>{render.money(gap)}</b> "
+                "landed on your credit card (24% APR). Cover it now, or carry the debt?</div>",
+                unsafe_allow_html=True)
+    g1, g2 = st.columns(2)
+    if sellable > 0:
+        if g1.button(f"Sell investments to cover {render.money(min(gap, sellable))}",
+                     use_container_width=True,
+                     help="Safest assets first. Profits taxed at year-end."):
+            _sell_to_cover(s, min(gap, sellable))
+            ss.gap_offered_for = s.turn
+            st.rerun()
+    else:
+        g1.caption("Nothing to sell — the debt stays this time. An emergency fund covers this.")
+    if g2.button("Keep it on the card", use_container_width=True,
+                 help="24% APR starts next month."):
+        ss.gap_offered_for = s.turn
+        st.rerun()
+
+
 def screen_play():
     s = ss.state
     quiz.prefetch(s.turn)          # warm this day's quiz bank in the background (no stall)
     st.markdown(f"<div class='apphead'><b>Chryseos</b> &nbsp;·&nbsp; Month {s.turn} of {config.TURN_LIMIT} "
-                f"&nbsp;·&nbsp; goal {render.money(s.target)}</div>", unsafe_allow_html=True)
+                f"&nbsp;·&nbsp; Age {jobs.age_at(s.path, s.turn)} &nbsp;·&nbsp; goal {render.money(s.target)} "
+                f"by age {jobs.goal_age(s.path, config.TURN_LIMIT)}</div>", unsafe_allow_html=True)
     left, right = st.columns([3, 1], gap="large")
     with right:
         st.markdown(render.rings_html(s), unsafe_allow_html=True)
@@ -306,6 +371,7 @@ def screen_play():
         events = render.event_html(ss.month)
         if events:
             st.markdown(events, unsafe_allow_html=True)
+        _gap_choice(s)
         milestone = render.milestone_html(ss.get("last_milestone"))
         if milestone:
             st.markdown(milestone, unsafe_allow_html=True)
@@ -314,17 +380,19 @@ def screen_play():
         st.write("")
         bc = st.columns([1.2, 1.6, 2.2])
         taken = ss.get("quiz_taken_for") == s.turn
-        if bc[1].button("📚 Done — already took it" if taken else "📚 Money quiz",
-                        disabled=taken, use_container_width=True,
-                        help="Pass this month's quiz (65%) to earn a month of career "
-                             "experience toward your next job tier. One attempt per month."):
+        jobless = not s.employed
+        qlabel = ("💼 No job this month" if jobless
+                  else "💼 Work done for this month" if taken
+                  else "💼 Do your job — money quiz")
+        if bc[1].button(qlabel, disabled=taken or jobless, use_container_width=True,
+                        help="No work without a job — take a role in Job & moves first."
+                             if jobless else
+                             "Your month's work. Pass (65%) to log a month of experience. "
+                             "One shot per month."):
             ss.quiz = None
-            ss.quiz_home = "play"
             ss.quiz_day = s.turn                    # topic rotates with the month
             go("quiz"); st.rerun()
         if bc[0].button("End the month ▶", type="primary"):
-            if s.employed:
-                ss.months_worked = ss.get("months_worked", 0) + 1   # tenure unlocks better jobs
             turn.end_month(s)
             ss.last_milestone = s._milestone      # capture before begin_month clears it
             if s.game_over is not None:
@@ -342,7 +410,9 @@ def screen_howto():
         ("1", "A paycheck arrives", "See what's really left after taxes — take-home, not the offer."),
         ("2", "Essentials come out", "Rent, food, transport, and utilities are paid automatically."),
         ("3", "Life happens", "A surprise hits — a repair, a bonus, sometimes a layoff."),
-        ("4", "You choose", "Invest, pay down debt, treat yourself, or make a big move."),
+        ("4", "You do your job", "The money quiz is your month's work — pass it to log experience "
+              "and qualify for better-paying roles."),
+        ("5", "You choose", "Invest, pay down debt, treat yourself, or make a big move."),
     ]
     cells = "".join(f"<div class='step'><div class='no'>{n}</div><div><div class='st'>{t}</div>"
                     f"<div class='sd'>{d}</div></div></div>" for n, t, d in steps)
@@ -392,6 +462,8 @@ def screen_titles():
 def screen_results():
     s = ss.state
     outcome = s.game_over.value
+    if outcome == "win":
+        ss.mascot_won = True            # the menu mascot fills in once you've won
     earned_now = titles.earned_ids(s)
     ss.earned_titles |= earned_now
     look = {
@@ -403,8 +475,9 @@ def screen_results():
     st.markdown(
         f"<div class='rbanner'><span class='rbadge' style='color:{look[0]};"
         f"background:{look[0]}1a;border:1px solid {look[0]}55'>{look[1]}</span>"
-        f"<h2>{look[2]}</h2><div class='rs'>{render.money(s.net_worth())} net worth after "
-        f"{s.turn} months · goal {render.money(s.target)}</div></div>", unsafe_allow_html=True)
+        f"<h2>{look[2]}</h2><div class='rs'>{render.money(s.net_worth())} net worth at age "
+        f"{jobs.age_at(s.path, s.turn)}, after {s.turn} months · goal was {render.money(s.target)} "
+        f"by age {jobs.goal_age(s.path, config.TURN_LIMIT)}</div></div>", unsafe_allow_html=True)
 
     st.markdown(render.results_chart_html(s), unsafe_allow_html=True)
 
@@ -428,7 +501,7 @@ def screen_results():
         ss.coach_for = id(s)
     ct = "Your coach · AI" if ss.coach_is_ai else "Your coach"
     st.markdown(f"<div class='coach'><div><div class='ct'>{ct}</div>"
-                f"<p>{ss.coach_text}</p></div></div>", unsafe_allow_html=True)
+                f"<p>{render.html_safe(ss.coach_text)}</p></div></div>", unsafe_allow_html=True)
 
     if earned_now:
         chips = "".join(f"<span class='tchip'>{t['icon']} {t['name']}</span>"
@@ -452,12 +525,17 @@ def _start_quiz():
     ss.quiz = mcq.Quiz(bank)
     ss.quiz_topic, ss.quiz_ai = topic, used_ai
     ss.quiz_phase, ss.quiz_feedback = "answer", None
-    ss.quiz_credited = False            # results view awards study credit exactly once
-    if ss.get("quiz_home") == "play":
-        ss.quiz_taken_for = ss.state.turn   # the attempt is spent once questions are shown
+    ss.quiz_credited = False            # results view awards experience exactly once
+    ss.quiz_taken_for = ss.state.turn   # the attempt is spent once questions are shown
 
 
 def screen_quiz():
+    if ss.get("state") is None or ss.state.game_over is not None:
+        go("title"); st.rerun()         # the quiz only exists inside a running game now
+    if not ss.state.employed and ss.get("quiz") is None:
+        go("play"); st.rerun()          # no job, no work: the quiz is gated on employment
+    st.markdown(citybg.city_html(seed=ss.get("city_seed", 7), mascots=False, tall=True),
+                unsafe_allow_html=True)
     q = ss.get("quiz")
 
     # start view
@@ -465,18 +543,16 @@ def screen_quiz():
         day = ss.get("quiz_day", 0)
         topic = quiz.prefetch(day)      # warm the bank while the player reads
         st.markdown("<h2 style='margin-bottom:2px'>Money quiz</h2>"
-                    f"<p style='color:#9aa0ac;font-size:13.5px'>Today's topic: "
+                    f"<p style='color:#9aa0ac;font-size:16.5px'>Today's topic: "
                     f"<b style='color:#e8e8ea'>{topic.title()}</b> — 8–10 questions, easy to hard. "
                     "Pass mark is 65%.</p>", unsafe_allow_html=True)
-        ingame = ss.get("quiz_home") == "play"
-        if ingame:
-            st.caption("Pass to earn **+1 month of career experience** toward your next job tier "
-                       f"(up to {jobs.QUIZ_CREDIT_CAP} total). One attempt per month.")
+        st.caption("Your month's work: pass (65%) and the month counts toward your next role. "
+                   "One shot per month.")
         c = st.columns([1, 1, 3])
         if c[0].button("Start quiz", type="primary"):
             _start_quiz(); st.rerun()
-        if c[1].button("← Back to the game" if ingame else "← Menu"):
-            go("play" if ingame else "title"); st.rerun()
+        if c[1].button("← Back to the game"):
+            go("play"); st.rerun()
         return
 
     # results view
@@ -490,50 +566,38 @@ def screen_quiz():
             f"<h2>{res['score']} / {res['total']} · {res['percent']}%</h2>"
             f"<div class='rs'>{mcq.verdict_message(res['percent'])}</div></div>", unsafe_allow_html=True)
 
-        ingame = ss.get("quiz_home") == "play"
-        if ingame:
-            if passed and not ss.get("quiz_credited"):
-                ss.quiz_credited = True
-                ss.quiz_awarded = ss.get("quiz_credit", 0) < jobs.QUIZ_CREDIT_CAP
-                if ss.quiz_awarded:
-                    ss.quiz_credit = ss.get("quiz_credit", 0) + 1
-            if passed:
-                credit = min(ss.get("quiz_credit", 0), jobs.QUIZ_CREDIT_CAP)
-                line = (f"+1 month of experience — {credit}/{jobs.QUIZ_CREDIT_CAP} study credit earned"
-                        if ss.get("quiz_awarded")
-                        else f"Study credit already maxed ({jobs.QUIZ_CREDIT_CAP}/{jobs.QUIZ_CREDIT_CAP})")
-                st.markdown(f"<div class='milestone'><div><span class='mlab'>★ Career credit</span>"
-                            f"<div class='mtitle'>{line}</div></div></div>", unsafe_allow_html=True)
-            else:
-                st.caption("No credit this time — the pass mark is 65%. Try again next month.")
-            if st.button("← Back to the game", type="primary"):
-                ss.quiz = None; go("play"); st.rerun()
-            return
-
-        c = st.columns([1, 1, 3])
-        if c[0].button("New quiz", type="primary"):
-            ss.quiz_day = ss.get("quiz_day", 0) + 1
-            ss.quiz = None; st.rerun()
-        if c[1].button("← Menu"):
-            ss.quiz = None; go("title"); st.rerun()
+        if passed and not ss.get("quiz_credited"):
+            ss.quiz_credited = True
+            ss.months_worked = ss.get("months_worked", 0) + 1
+        if passed:
+            exp = ss.get("months_worked", 0)
+            st.markdown(f"<div class='milestone'><div><span class='mlab'>★ Month of work logged</span>"
+                        f"<div class='mtitle'>+1 month of experience — {exp} total toward "
+                        f"your next role</div></div></div>", unsafe_allow_html=True)
+        else:
+            st.caption("A rough month at work — no experience logged. The pass mark is 65%; "
+                       "your next shot comes next month.")
+        if st.button("← Back to the game", type="primary"):
+            ss.quiz = None; go("play"); st.rerun()
         return
 
     # review view
     if ss.get("quiz_phase") == "review":
         fb = ss.quiz_feedback
         p = fb["prompt"]
-        st.markdown(f"<div class='amsg'>Question {p['number']} of {p['total']}</div>", unsafe_allow_html=True)
-        st.markdown(f"**{p['stem']}**")
+        st.markdown(f"<div class='qmeta'>Question {p['number']} of {p['total']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='qstem'>{render.html_safe(p['stem'])}</div>", unsafe_allow_html=True)
         for opt in p["options"]:
-            oid = opt["id"]
+            oid, otext = opt["id"], render.html_safe(opt["text"])
             if oid == fb["correct_option_id"]:
-                st.markdown(f"<div class='qopt qgood'>✓ {oid}. {opt['text']}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='qopt qgood'>✓ {oid}. {otext}</div>", unsafe_allow_html=True)
             elif oid == fb["chosen"] and not fb["correct"]:
-                st.markdown(f"<div class='qopt qbad'>✗ {oid}. {opt['text']}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='qopt qbad'>✗ {oid}. {otext}</div>", unsafe_allow_html=True)
             else:
-                st.markdown(f"<div class='qopt'>{oid}. {opt['text']}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='qopt'>{oid}. {otext}</div>", unsafe_allow_html=True)
         verdict = "Correct!" if fb["correct"] else f"Not quite — the answer was {fb['correct_option_id']}."
-        st.markdown(f"<div class='qexpl'><b>{verdict}</b> {fb['explanation']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='qexpl'><b>{verdict}</b> {render.html_safe(fb['explanation'])}</div>",
+                    unsafe_allow_html=True)
         if st.button("See results" if q.finished else "Next question ▶", type="primary"):
             ss.quiz_phase, ss.quiz_feedback = "answer", None
             st.rerun()
@@ -544,10 +608,10 @@ def screen_quiz():
     item = q.current()
     diff = mcq.DIFFICULTY_LABELS.get(item.difficulty.lower(), item.difficulty.title())
     src = "AI" if ss.get("quiz_ai") else "practice set"
-    st.markdown(f"<div class='amsg'>Question {p['number']} of {p['total']} · "
+    st.markdown(f"<div class='qmeta'>Question {p['number']} of {p['total']} · "
                 f"{ss.quiz_topic.title()} · {diff} · {src}</div>", unsafe_allow_html=True)
-    st.markdown(f"**{p['stem']}**")
-    labels = {opt["id"]: f"{opt['id']}.  {opt['text']}" for opt in p["options"]}
+    st.markdown(f"<div class='qstem'>{render.html_safe(p['stem'])}</div>", unsafe_allow_html=True)
+    labels = {opt["id"]: f"{opt['id']}.  {render.md_safe(opt['text'])}" for opt in p["options"]}
     choice = st.radio("Choose one:", [opt["id"] for opt in p["options"]],
                       format_func=lambda x: labels[x], key=f"quiz_{p['id']}", index=None)
     if st.button("Submit answer", type="primary", disabled=choice is None):

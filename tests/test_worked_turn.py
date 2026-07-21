@@ -28,7 +28,8 @@ def test_worked_turn_1(monkeypatch):
     Pins the happiness constants to the spec's original values so this worked example keeps
     verifying the engine math even after config.py is tuned for balance (decay, cap, start).
     """
-    monkeypatch.setattr(config, "DECAY", 4)
+    monkeypatch.setattr(config, "DECAY_BASE", 4)        # the spec's original flat decay
+    monkeypatch.setattr(config, "DECAY_GROWTH", 1.0)    # no neglect spiral in the example
     monkeypatch.setattr(config, "HAPPINESS_START", 60)
     monkeypatch.setattr(config, "GAIN_SCALE", 1.5)
     monkeypatch.setattr(config, "LEISURE_HAPPINESS_CAP", 99)   # non-binding, as in the spec

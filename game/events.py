@@ -5,7 +5,8 @@
 import json
 import os
 import config
-from .formulas import round_half_up, annual_reconciliation
+from .formulas import round_half_up, tax_breakdown
+from .outflows import _ensure_credit_card
 
 _DATA = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "data", "events.json"))
 _LABELS = {}
@@ -29,13 +30,25 @@ def _label_for(key: str, turn: int) -> str:
 
 
 def phase_annual_tax(state):
-    """At a year boundary, reconcile withholding vs. tax owed, add capital gains, pay what cash allows."""
+    """At a year boundary, true-up the year's taxes and settle what cash allows.
+
+    The liability is progressive (standard deduction + marginal federal brackets + flat
+    state); withholding was flat, so wage income usually over-withholds -> a REFUND paid
+    into cash. Capital gains were never withheld, so realized gains are owed on top --
+    the realistic way to end up writing a check in April. The full itemized breakdown is
+    kept on state._tax so the UI can show every step of the math.
+    """
     if state.turn % 12 != 0:
         return None
 
-    reconciliation = annual_reconciliation(state.annual_gross_ytd, state.withheld_income_tax_ytd)
-    tax_bill = max(0, reconciliation) + state.capital_gains_owed
+    bd = tax_breakdown(state.annual_gross_ytd, state.withheld_income_tax_ytd)
+    reconciliation = bd["reconciliation"]
+    cap_gains = state.capital_gains_owed
 
+    refund = -reconciliation if reconciliation < 0 else 0
+    state.cash += refund                                  # over-withheld -> money back
+
+    tax_bill = max(0, reconciliation) + cap_gains
     state.tax_owed += tax_bill
     pay = min(state.cash, state.tax_owed)
     state.cash -= pay
@@ -45,8 +58,8 @@ def phase_annual_tax(state):
     state.annual_gross_ytd = 0
     state.capital_gains_owed = 0
 
-    state._tax = {"tax_bill": tax_bill, "reconciliation": reconciliation, "paid": pay,
-                  "still_owed": state.tax_owed}
+    state._tax = {**bd, "capital_gains": cap_gains, "refund": refund,
+                  "tax_bill": tax_bill, "paid": pay, "still_owed": state.tax_owed}
     return state._tax
 
 
@@ -77,8 +90,12 @@ def phase_life_event(state, rng, forced: dict | None = None) -> dict | None:
         lo, hi = bucket["magnitude"]
         mag = amount if amount is not None else rng.draw_int(lo, hi)
         delta = bucket["sign"] * mag
-        state.cash = max(0, state.cash + delta)         # losses can't push cash below 0
+        gap = max(0, -delta - state.cash)               # the part cash can't cover
+        state.cash = max(0, state.cash + delta)
+        if gap > 0:                                     # surprises don't evaporate: the
+            _ensure_credit_card(state)["principal"] += gap   # unpaid part becomes card debt
         desc["cash_delta"] = delta
+        desc["gap"] = gap
         if bucket.get("gross_mult") is not None:
             state.gross_month = round_half_up(state.gross_month * bucket["gross_mult"])
         if bucket.get("set_unemployed"):

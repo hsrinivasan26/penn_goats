@@ -15,19 +15,33 @@ TURN_LIMIT = 60            # months (5 years)
 TARGET = 25_000           # net worth needed to win
 BANKRUPTCY_SHORTFALL_STREAK = 3   # lose after this many months in a row failing to cover essentials
 
-# Taxes / withholding (applied to gross pay)
-FEDERAL_RATE = 0.12
-STATE_RATE = 0.03
+# Taxes. Withholding from each paycheck is FLAT (like a default W-4): federal 12% +
+# state 3% + FICA. The TRUE year-end liability is progressive, computed on real-style
+# numbers: a standard deduction, then marginal federal brackets (state stays flat 3%).
+# Flat withholding vs progressive liability is what makes April real: most wage-earners
+# get a REFUND (they over-withheld), while selling investments creates un-withheld
+# capital gains you can OWE on. The year-end screen shows the full math -- no black box.
+FEDERAL_RATE = 0.12       # per-paycheck federal withholding
+STATE_RATE = 0.03         # per-paycheck state withholding; also the flat state liability
 FICA_RATE = 0.0765
-INCOME_TAX_RATE = 0.15    # federal + state; used for the year-end reconciliation
+STD_DEDUCTION = 15_000    # annual income below this is untaxed (federal)
+FED_BRACKETS = [          # (upper bound of taxable income, marginal rate); None = no cap
+    (12_000, 0.10),
+    (48_000, 0.12),
+    (None,   0.22),
+]
 CAP_GAINS_RATE = 0.15
 
 # Monthly investment returns, drawn from Normal(mu, sigma). sigma 0 = deterministic.
+# Crypto additionally has a fat left tail: each month, crash_prob chance of a crash drawn
+# uniformly from crash_range INSTEAD of the normal draw. This is what makes over-allocating
+# to crypto a genuine trap (the quiz's own lesson) rather than the optimal strategy --
+# verified by simulation: all-in crypto must lose to the index fund.
 RETURNS = {
     "riskfree": {"mu": 0.003, "sigma": 0.000},
     "index":    {"mu": 0.007, "sigma": 0.030},
     "growth":   {"mu": 0.012, "sigma": 0.080},
-    "crypto":   {"mu": 0.020, "sigma": 0.250},
+    "crypto":   {"mu": 0.012, "sigma": 0.180, "crash_prob": 0.04, "crash_range": (-0.60, -0.35)},
     "home":     {"mu": 0.003, "sigma": 0.010},
 }
 
@@ -52,11 +66,17 @@ STRESS_WEIGHT = {
     "student":     0.15,  # light, but still a real (small) drag
 }
 
-# Essentials (monthly). Trimmed from a $2000 baseline to give Path A room to survive.
-ESSENTIALS = {"rent": 1100, "food": 380, "transport": 230, "utilities": 140}
+# Essentials (monthly). Back to a $2,000 baseline: tighter months, especially early on.
+ESSENTIALS = {"rent": 1200, "food": 400, "transport": 240, "utilities": 160}
 
 # Happiness  (rebalanced for a harder game -- see README "Balance" / consult the team)
-DECAY = 7                 # natural decay per month (was 4: happiness was too easy to hold)
+# Decay is EXPONENTIAL IN NEGLECT: the longer you go without spending anything on fun,
+# the faster happiness drains -- 5 the first month, then ~7, 9, 12, 16... Spending any
+# leisure this month resets the spiral back to the base. Forces fun into the budget as a
+# recurring line, not a one-off purchase.
+DECAY_BASE = 5            # natural decay in a month where you treated yourself
+DECAY_GROWTH = 1.35       # multiplier per consecutive month WITHOUT leisure
+DECAY_MAX = 25            # spiral cap (sanity bound)
 GAIN_SCALE = 1.5          # leisure_happiness = round(1.5 * sqrt(spend))
 LEISURE_HAPPINESS_CAP = 8 # max happiness a single month of leisure can buy -- can't be binged,
                           # so recovering from a happiness hole takes several steady months
@@ -90,16 +110,17 @@ EVENTS = [
 ]
 
 # Starting scenarios (both early-career). Not the differentiation-guide's Path A/B.
-# REBALANCED for the tiered job board: income now climbs to ~$7,200/mo, so the old
-# $23k/$68k targets became trivial. Per-path `target` was re-derived by simulation
-# (300 seeds, skilled play that climbs the career ladder) to land near a 40% win rate
-# on each path -- an intentionally hard game. gross_month is only the STARTING salary now;
-# players change jobs via the board (see ui/jobs.py). !!! Team: re-run the sim before
-# retuning these -- the job board makes them very sensitive.
+# REBALANCED for the tiered job board, then grounded: salaries in ui/jobs.py are
+# early-career figures (the ladder tops out at $6,300/mo, not $7,200), essentials are
+# $2,000/mo, and the targets below were re-derived by simulation (skilled play that
+# climbs the ladder, tax refunds included) to land at a ~40% win rate on each path --
+# hard, with less-astronomical goals than the first pass. gross_month is only
+# the STARTING salary; players change jobs via the board. !!! Team: re-run the sim
+# before retuning -- the job board makes these very sensitive.
 PATHS = {
-    "A": {"gross_month": 3300, "cash": 500, "student_loan": None, "target": 190_000},
-    "B": {"gross_month": 5000, "cash": 500,
-          "student_loan": {"principal": 30_000, "apr": 0.06}, "target": 225_000},
+    "A": {"gross_month": 3300, "cash": 500, "student_loan": None, "target": 164_000},
+    "B": {"gross_month": 4800, "cash": 500,
+          "student_loan": {"principal": 30_000, "apr": 0.06}, "target": 179_000},
 }
 
 # Big-move defaults (Phase 6)

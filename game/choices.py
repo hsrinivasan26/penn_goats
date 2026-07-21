@@ -3,7 +3,7 @@
 
 import config
 from .enums import AssetClass, DebtKind, Housing
-from .formulas import capital_gain, cap_gains_tax, amortize
+from .formulas import capital_gain, cap_gains_tax, amortize, leisure_happiness
 
 
 # THE BIG FOUR MOVES
@@ -33,10 +33,16 @@ def sell(state, amount: int, cls) -> bool:
 
 
 def leisure(state, amount: int) -> bool:
+    """Spend on fun. The happiness lifts IMMEDIATELY (the UI ring responds the moment you
+    spend); applying the capped gain as a diff keeps the monthly cap honest across several
+    treats in one month. Month-end (phase 7) then only applies decay."""
     if not (0 < amount <= state.cash):
         return False
+    prev_gain = min(config.LEISURE_HAPPINESS_CAP, leisure_happiness(state.leisure_spend))
     state.cash -= amount
     state.leisure_spend += amount
+    new_gain = min(config.LEISURE_HAPPINESS_CAP, leisure_happiness(state.leisure_spend))
+    state.happiness = min(100, state.happiness + (new_gain - prev_gain))
     return True
 
 
