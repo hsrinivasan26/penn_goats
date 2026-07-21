@@ -33,6 +33,7 @@ import titles
 import coach
 import quiz
 import jobs
+import citybg
 
 from PIL import Image as _Image
 st.set_page_config(
@@ -77,6 +78,12 @@ def start_game(path):
 # --------------------------------------------------------------------------
 
 def screen_title():
+    if "city_seed" not in ss:
+        ss.city_seed = random.randint(0, 999_999)      # a new skyline every session
+    _mascot = os.path.join(os.path.dirname(__file__), "static", "mascot.png")
+    st.markdown(citybg.city_html(seed=ss.city_seed, won=ss.get("mascot_won", False),
+                                 mascot_href="app/static/mascot.png" if os.path.exists(_mascot) else None),
+                unsafe_allow_html=True)
     st.markdown(
         "<div class='title-wrap'>"
         "<img class='title-mark' src='app/static/logo-mark.png' alt='Chryseos'/>"
@@ -90,9 +97,6 @@ def screen_title():
             go("choose"); st.rerun()
         if st.button("How to play", use_container_width=True):
             go("howto"); st.rerun()
-        if st.button("Money quiz", use_container_width=True):
-            ss.quiz = None; ss.quiz_home = "title"
-            go("quiz"); st.rerun()
         if st.button("Titles", use_container_width=True):
             go("titles"); st.rerun()
 
@@ -376,7 +380,6 @@ def screen_play():
                         help="Your month's work. Pass (65%) to log a month of experience. "
                              "One shot per month."):
             ss.quiz = None
-            ss.quiz_home = "play"
             ss.quiz_day = s.turn                    # topic rotates with the month
             go("quiz"); st.rerun()
         if bc[0].button("End the month ▶", type="primary"):
@@ -449,6 +452,8 @@ def screen_titles():
 def screen_results():
     s = ss.state
     outcome = s.game_over.value
+    if outcome == "win":
+        ss.mascot_won = True            # the menu mascot fills in once you've won
     earned_now = titles.earned_ids(s)
     ss.earned_titles |= earned_now
     look = {
@@ -510,12 +515,13 @@ def _start_quiz():
     ss.quiz = mcq.Quiz(bank)
     ss.quiz_topic, ss.quiz_ai = topic, used_ai
     ss.quiz_phase, ss.quiz_feedback = "answer", None
-    ss.quiz_credited = False            # results view awards study credit exactly once
-    if ss.get("quiz_home") == "play":
-        ss.quiz_taken_for = ss.state.turn   # the attempt is spent once questions are shown
+    ss.quiz_credited = False            # results view awards experience exactly once
+    ss.quiz_taken_for = ss.state.turn   # the attempt is spent once questions are shown
 
 
 def screen_quiz():
+    if ss.get("state") is None or ss.state.game_over is not None:
+        go("title"); st.rerun()         # the quiz only exists inside a running game now
     q = ss.get("quiz")
 
     # start view
@@ -526,15 +532,13 @@ def screen_quiz():
                     f"<p style='color:#9aa0ac;font-size:13.5px'>Today's topic: "
                     f"<b style='color:#e8e8ea'>{topic.title()}</b> — 8–10 questions, easy to hard. "
                     "Pass mark is 65%.</p>", unsafe_allow_html=True)
-        ingame = ss.get("quiz_home") == "play"
-        if ingame:
-            st.caption("Your month's work: pass (65%) and the month counts toward your next role. "
-                       "One shot per month.")
+        st.caption("Your month's work: pass (65%) and the month counts toward your next role. "
+                   "One shot per month.")
         c = st.columns([1, 1, 3])
         if c[0].button("Start quiz", type="primary"):
             _start_quiz(); st.rerun()
-        if c[1].button("← Back to the game" if ingame else "← Menu"):
-            go("play" if ingame else "title"); st.rerun()
+        if c[1].button("← Back to the game"):
+            go("play"); st.rerun()
         return
 
     # results view
@@ -548,29 +552,19 @@ def screen_quiz():
             f"<h2>{res['score']} / {res['total']} · {res['percent']}%</h2>"
             f"<div class='rs'>{mcq.verdict_message(res['percent'])}</div></div>", unsafe_allow_html=True)
 
-        ingame = ss.get("quiz_home") == "play"
-        if ingame:
-            if passed and not ss.get("quiz_credited"):
-                ss.quiz_credited = True
-                ss.months_worked = ss.get("months_worked", 0) + 1
-            if passed:
-                exp = ss.get("months_worked", 0)
-                st.markdown(f"<div class='milestone'><div><span class='mlab'>★ Month of work logged</span>"
-                            f"<div class='mtitle'>+1 month of experience — {exp} total toward "
-                            f"your next role</div></div></div>", unsafe_allow_html=True)
-            else:
-                st.caption("A rough month at work — no experience logged. The pass mark is 65%; "
-                           "your next shot comes next month.")
-            if st.button("← Back to the game", type="primary"):
-                ss.quiz = None; go("play"); st.rerun()
-            return
-
-        c = st.columns([1, 1, 3])
-        if c[0].button("New quiz", type="primary"):
-            ss.quiz_day = ss.get("quiz_day", 0) + 1
-            ss.quiz = None; st.rerun()
-        if c[1].button("← Menu"):
-            ss.quiz = None; go("title"); st.rerun()
+        if passed and not ss.get("quiz_credited"):
+            ss.quiz_credited = True
+            ss.months_worked = ss.get("months_worked", 0) + 1
+        if passed:
+            exp = ss.get("months_worked", 0)
+            st.markdown(f"<div class='milestone'><div><span class='mlab'>★ Month of work logged</span>"
+                        f"<div class='mtitle'>+1 month of experience — {exp} total toward "
+                        f"your next role</div></div></div>", unsafe_allow_html=True)
+        else:
+            st.caption("A rough month at work — no experience logged. The pass mark is 65%; "
+                       "your next shot comes next month.")
+        if st.button("← Back to the game", type="primary"):
+            ss.quiz = None; go("play"); st.rerun()
         return
 
     # review view

@@ -11,13 +11,13 @@ import os
 MODEL = "gemini-3.1-flash-lite"          # same model the MCQ backend uses
 
 _FALLBACK = {
-    "win": "You reached a real buffer — that's the whole game. From here, you're not living "
+    "win": "You built a real head start — that's the whole game. From here, you're not living "
            "paycheck to paycheck.",
     "bankruptcy": "The essentials caught up with you. Next run, keep a bigger cushion before "
                   "investing so one bad month doesn't spiral.",
     "burnout": "You ran yourself into the ground. A little fun each month keeps happiness up — "
                "it's part of the budget too.",
-    "timeout": "You survived the five years but didn't reach the buffer. Steady saving and "
+    "timeout": "You survived the five years but didn't reach the goal. Steady saving and "
                "clearing high-interest debt gets you there.",
 }
 

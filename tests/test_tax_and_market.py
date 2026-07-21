@@ -101,3 +101,41 @@ def test_crash_rate_is_about_right_over_many_months():
         if r <= -0.35:
             crashes += 1
     assert 15 <= crashes <= 70                                # ~4% of 1,000, loosely
+
+
+# ---- milestones scale with the player's own economy ------------------------
+
+def test_milestones_use_relative_thresholds():
+    from game.engine import check_milestones, MILESTONES
+    ids = {m["id"] for m in MILESTONES}
+    assert {"one_month", "buffer", "quarter", "halfway"} <= ids
+
+    s = new_game("A", seed=1)           # essentials: 1200+400+240+160 = 2000/mo rent path
+    s.cash = 2_000
+    check_milestones(s)                 # fires at most one per turn -> walk until stable
+    fired = set(s.milestones_fired)
+    assert "first_500" in fired or "one_month" in fired
+
+    # one month of essentials == $2,000 exactly, not the old hardcoded $1,850
+    s2 = new_game("A", seed=1)
+    s2.cash = 1_900
+    for _ in range(6):
+        check_milestones(s2)
+    assert "one_month" not in s2.milestones_fired
+    s2.cash = 2_000
+    for _ in range(6):
+        check_milestones(s2)
+    assert "one_month" in s2.milestones_fired
+
+
+def test_halfway_milestone_tracks_the_actual_target():
+    from game.engine import check_milestones
+    s = new_game("A", seed=1)
+    s.cash = int(0.5 * s.target) - 1_000
+    for _ in range(10):
+        check_milestones(s)
+    assert "halfway" not in s.milestones_fired
+    s.cash = int(0.5 * s.target) + 1_000
+    for _ in range(10):
+        check_milestones(s)
+    assert "halfway" in s.milestones_fired

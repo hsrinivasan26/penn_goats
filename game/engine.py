@@ -33,11 +33,24 @@ def phase_checks(state) -> None:
         state.game_over = GameOver.TIMEOUT
 
 
+def _monthly_essentials(state) -> int:
+    housing = state.mortgage_payment if state.housing == Housing.OWN else state.rent
+    return housing + state.food + state.transport + state.utilities
+
+
 def _condition_met(state, when: dict) -> bool:
+    """Milestone conditions. Absolute ones (cash_at_least / net_worth_at_least) exist for
+    small early wins; the rest are RELATIVE -- months of the player's own essentials, or a
+    fraction of the player's own target -- so milestones stay truthful no matter how the
+    economy or the goals get retuned."""
     for key, value in when.items():
         if key == "cash_at_least" and state.cash < value:
             return False
         if key == "net_worth_at_least" and state.net_worth() < value:
+            return False
+        if key == "cash_months_of_essentials" and state.cash < value * _monthly_essentials(state):
+            return False
+        if key == "net_worth_frac_of_target" and state.net_worth() < value * state.target:
             return False
         if key == "owns_home" and (state.housing == Housing.OWN) != value:
             return False

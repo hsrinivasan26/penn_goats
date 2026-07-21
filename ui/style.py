@@ -174,6 +174,20 @@ h1,h2,h3{font-family:var(--disp);letter-spacing:-.02em}
 .btax-good{color:var(--cash);font-weight:700}
 .btax-bad{color:#ef4444;font-weight:700}
 
+/* title backdrop: procedural scrolling city + mascot silhouette */
+.citybg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.block-container{position:relative;z-index:1}
+.citylayer{position:absolute;bottom:0;left:0;display:flex;width:max-content;
+  animation-name:cityscroll;animation-timing-function:linear;animation-iteration-count:infinite}
+.citylayer.far{height:34vh;opacity:.55}
+.citylayer.near{height:21vh;opacity:.9}
+.citylayer svg{display:block;height:100%}
+@keyframes cityscroll{to{transform:translateX(-1600px)}}
+.citymascot{position:absolute;left:50%;bottom:5vh;transform:translateX(-50%);
+  width:min(56vh,78vw);height:auto;opacity:.85}
+.citymascot.won{filter:drop-shadow(0 0 34px rgba(245,182,66,.35))}
+@media (prefers-reduced-motion: reduce){.citylayer{animation:none}}
+
 /* fluid motion */
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes popin{from{opacity:0;transform:translateY(6px) scale(.985)}to{opacity:1;transform:none}}

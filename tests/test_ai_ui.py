@@ -38,7 +38,7 @@ def _finished_state(outcome="win", cash=70_000):
 def test_coach_fallback_without_generator_or_key(monkeypatch):
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     text, is_ai = coach.overview(_finished_state("win"), "win")
-    assert is_ai is False and "buffer" in text
+    assert is_ai is False and "head start" in text
 
 
 def test_coach_uses_generator_output():

@@ -15,10 +15,10 @@ from game.enums import GameOver
 
 ASSET_CLASSES = ["riskfree", "index", "growth", "crypto"]
 GAME_OVER_BLURB = {
-    GameOver.WIN: "YOU WIN -- you reached a real safety buffer. That's the goal, not living paycheck to paycheck.",
+    GameOver.WIN: "YOU WIN -- you built a real financial head start, not living paycheck to paycheck.",
     GameOver.BANKRUPTCY: "BANKRUPT -- you couldn't cover essentials several months running and fell into a shortfall spiral.",
     GameOver.BURNOUT: "BURNOUT -- happiness hit zero. Money isn't everything! You have to enjoy some of life.",
-    GameOver.TIMEOUT: "TIME'S UP -- you survived, but didn't reach the buffer target.", # ...
+    GameOver.TIMEOUT: "TIME'S UP -- you survived, but didn't reach the goal.", # ...
 }
 
 
@@ -162,7 +162,7 @@ def auto_strategy(state):
 def play_interactive(path, seed):
     state = new_game(path, seed=seed)
     rng = SeededRNG(seed)
-    print(f"Chryseos -- Path {path}, seed {seed}. Survive to the buffer. Ctrl-C to quit.")
+    print(f"Chryseos -- Path {path}, seed {seed}. Reach your goal. Ctrl-C to quit.")
     while not state.game_over:
         before = state.happiness
         run_turn(state, rng, choose_actions=interactive_actions)
